@@ -1,0 +1,19 @@
+{
+  "name": "CatMath Adventure",
+  "short_name": "CatMath",
+  "description": "Belajar perkalian & pembagian 1-10 bersama Mimi si kucing lucu.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#6ec6ff",
+  "theme_color": "#6ec6ff",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+@import "tailwindcss";
+
+@theme {
+  --color-langit: #6ec6ff;
+  --color-laut: #4f8ef7;
+  --color-laut-tua: #2f6ede;
+  --color-awan: #eaf6ff;
+  --color-kuning: #ffd86e;
+  --color-mint: #7ee8b2;
+  --color-ungu: #b79cff;
+  --color-oranye: #ffb067;
+  --color-pink: #ff9bc4;
+  --color-merah: #ff8a8a;
+
+  --font-sans: var(--font-fredoka), "Trebuchet MS", sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  color: #14416e;
+  background: linear-gradient(180deg, #cdeeff 0%, #8fd6ff 45%, #6ec6ff 100%);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Animasi umum ---------- */
+@keyframes bobbing {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes napas {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+@keyframes lompat {
+  0% { transform: translateY(0) scale(1); }
+  25% { transform: translateY(-26px) scale(1.06); }
+  50% { transform: translateY(0) scale(0.96); }
+  75% { transform: translateY(-12px) scale(1.03); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes goyang {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}
+@keyframes putar-penuh {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes lambai {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-24deg); }
+  60% { transform: rotate(14deg); }
+}
+@keyframes tepuk {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  50% { transform: translateX(9px) rotate(-18deg); }
+}
+@keyframes muncul {
+  from { opacity: 0; transform: translateY(18px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes pop-in {
+  0% { transform: scale(0.3); opacity: 0; }
+  70% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes getar {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+@keyframes naik-hilang {
+  0% { opacity: 1; transform: translateY(0) scale(0.9); }
+  100% { opacity: 0; transform: translateY(-80px) scale(1.6); }
+}
+@keyframes awan-jalan {
+  from { transform: translateX(-30vw); }
+  to { transform: translateX(130vw); }
+}
+@keyframes lari-tikus {
+  from { left: -20%; }
+  to { left: 106%; }
+}
+@keyframes rumput-goyang {
+  0%, 100% { transform: skewX(-6deg); }
+  50% { transform: skewX(6deg); }
+}
+@keyframes berenang {
+  0%, 100% { transform: translateX(0) rotate(-3deg); }
+  50% { transform: translateX(16px) rotate(3deg); }
+}
+@keyframes balon-naik {
+  from { transform: translateY(10vh); }
+  to { transform: translateY(-120vh); }
+}
+@keyframes pelangi {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+@keyframes denyut-cincin {
+  0% { transform: scale(0.6); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes kilau {
+  0%, 100% { opacity: 0.15; transform: scale(0.7) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(30deg); }
+}
+
+.anim-bobbing { animation: bobbing 2.4s ease-in-out infinite; }
+.anim-napas { animation: napas 2.6s ease-in-out infinite; }
+.anim-lompat { animation: lompat 0.85s ease-in-out; }
+.anim-goyang { animation: goyang 0.9s ease-in-out infinite; }
+.anim-putar { animation: putar-penuh 0.9s ease-in-out; }
+.anim-muncul { animation: muncul 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) both; }
+.anim-pop { animation: pop-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+.anim-getar { animation: getar 0.5s ease-in-out; }
+.anim-pelangi { animation: pelangi 3s linear infinite; }
+.anim-kilau { animation: kilau 1.8s ease-in-out infinite; }
+
+/* ---------- Tombol besar ---------- */
+.tombol-3d {
+  position: relative;
+  border: none;
+  border-radius: 24px;
+  color: #fff;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.16);
+  transition: transform 0.14s cubic-bezier(0.2, 1.4, 0.4, 1), filter 0.14s;
+  box-shadow: 0 8px 0 var(--bayangan, #2f6ede), 0 12px 22px rgba(20, 65, 110, 0.25);
+}
+.tombol-3d:hover { transform: translateY(-3px) scale(1.04); filter: brightness(1.06); }
+.tombol-3d:active { transform: translateY(6px) scale(0.98); box-shadow: 0 2px 0 var(--bayangan, #2f6ede); }
+.tombol-3d:disabled { filter: grayscale(0.65) brightness(0.97); cursor: not-allowed; transform: none; }
+/* jawaban benar tetap cerah walau tombolnya sudah dimatikan */
+.tombol-3d.jawaban-benar:disabled { filter: none; transform: scale(1.08); }
+
+.kartu {
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 28px;
+  box-shadow: 0 10px 30px rgba(20, 65, 110, 0.18);
+  border: 3px solid #ffffff;
+}
+
+.judul-tebal {
+  color: #fff;
+  text-shadow: 0 3px 0 #4f8ef7, 0 6px 14px rgba(20, 65, 110, 0.35);
+}
+
+.scroll-halus { scrollbar-width: thin; scrollbar-color: #4f8ef7 transparent; }
+.scroll-halus::-webkit-scrollbar { height: 8px; width: 8px; }
+.scroll-halus::-webkit-scrollbar-thumb { background: #4f8ef7; border-radius: 99px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
