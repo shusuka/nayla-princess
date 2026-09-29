@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Latar from "@/components/Latar";
 import Kucing from "@/components/Kucing";
-import { BarAtas, Bintang, Gelembung, Konfeti, Modal, Tombol } from "@/components/UI";
+import { Ikan, Makanan, Tikus } from "@/components/Hewan";
+import { BarAtas, Bintang, Gelembung, Konfeti, Modal, SinarPutar, Tombol } from "@/components/UI";
 import { GAME_BY_ID, PUJIAN, PUZZLE_GAMBAR, SEMANGAT } from "@/lib/data";
 import { soalCampur } from "@/lib/quiz";
 import { bicara, sfx } from "@/lib/sound";
@@ -17,8 +18,30 @@ function ambil(arr) {
 
 function AreaIkan({ pilihan, onPilih, salahDipilih, jawab, status }) {
   return (
-    <div className="relative mt-4 h-56 w-full overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-b from-[#9fdcff] to-[#3aa7e8] sm:h-64">
-      <div className="absolute inset-x-0 bottom-0 h-10 bg-[#ffe9a8]/70" />
+    <div className="relative mt-4 h-60 w-full overflow-hidden rounded-[28px] border-4 border-white bg-gradient-to-b from-[#a8e2ff] via-[#5cbcf2] to-[#2b86d6] shadow-[inset_0_-20px_40px_rgba(0,40,120,.25)] sm:h-72">
+      {/* cahaya matahari menembus air */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          background: "repeating-linear-gradient(100deg, rgba(255,255,255,.35) 0 18px, transparent 18px 60px)",
+          maskImage: "linear-gradient(180deg,#000,transparent 80%)",
+          WebkitMaskImage: "linear-gradient(180deg,#000,transparent 80%)",
+        }}
+      />
+      <div className="absolute inset-x-0 bottom-0 h-10 rounded-t-[50%] bg-gradient-to-b from-[#ffe9a8] to-[#f5cf7a]" />
+      {[8, 30, 74, 92].map((x, i) => (
+        <svg
+          key={`rumput-laut-${x}`}
+          className="absolute bottom-4"
+          style={{ left: `${x}%`, transformOrigin: "bottom", animation: `rumput-goyang ${2.4 + i * 0.4}s ease-in-out infinite` }}
+          width="24"
+          height="60"
+          viewBox="0 0 24 60"
+          aria-hidden="true"
+        >
+          <path d="M12 60 C 2 44, 22 30, 10 14 C 6 8, 12 2, 12 0" stroke="#2fae75" strokeWidth="5" fill="none" strokeLinecap="round" />
+        </svg>
+      ))}
       {[[10, 14], [26, 62], [48, 30], [70, 74], [86, 22]].map(([x, y], i) => (
         <span
           key={i}
@@ -42,11 +65,13 @@ function AreaIkan({ pilihan, onPilih, salahDipilih, jawab, status }) {
               type="button"
               disabled={salah || status === "betul"}
               onClick={() => onPilih(p)}
-              className={`relative flex flex-col items-center transition-opacity ${salah ? "opacity-40" : ""}`}
-              style={{ animation: `berenang ${2.2 + i * 0.5}s ease-in-out ${i * 0.3}s infinite` }}
+              className={`relative flex flex-col items-center transition-all duration-300 ${salah ? "opacity-40 grayscale" : "hover:scale-110"}`}
+              style={{ animation: `berenang ${2.6 + i * 0.5}s ease-in-out ${i * 0.3}s infinite` }}
             >
-              <span className={`block text-6xl sm:text-7xl ${betul ? "anim-lompat" : ""}`}>🐠</span>
-              <span className="-mt-3 rounded-full border-2 border-laut bg-white px-3 py-0.5 text-2xl font-bold text-laut-tua shadow sm:text-3xl">
+              <span className={`block ${betul ? "anim-lompat" : ""}`}>
+                <Ikan warna={["#ff9b54", "#ff7eb6", "#ffd13b", "#a98bff"][i % 4]} ukuran={100} senang={betul} arah={i % 2 ? -1 : 1} />
+              </span>
+              <span className="angka -mt-2 rounded-full border-[3px] border-white bg-gradient-to-b from-white to-[#e8f1ff] px-3.5 py-0.5 font-display text-2xl font-bold text-tinta shadow-[0_6px_12px_-4px_rgba(0,40,120,.5)] sm:text-3xl">
                 {p}
               </span>
             </button>
@@ -59,7 +84,7 @@ function AreaIkan({ pilihan, onPilih, salahDipilih, jawab, status }) {
 
 function AreaMakan({ pilihan, onPilih, salahDipilih, jawab, status, kucingId, dipakai }) {
   return (
-    <div className="mt-4 w-full rounded-3xl border-4 border-white bg-[#ffeccd] p-3">
+    <div className="polkadot mt-4 w-full rounded-[28px] border-4 border-white bg-[#ffe6cc] p-3" style={{ "--dot": "rgba(255,255,255,.5)" }}>
       <div className="flex justify-center">
         <Kucing
           id={kucingId}
@@ -79,12 +104,12 @@ function AreaMakan({ pilihan, onPilih, salahDipilih, jawab, status, kucingId, di
               type="button"
               disabled={salah || status === "betul"}
               onClick={() => onPilih(p)}
-              className={`relative rounded-3xl bg-white/80 px-3 py-2 shadow transition-transform hover:scale-110 ${
-                salah ? "opacity-40" : ""
+              className={`relative rounded-[24px] bg-white/90 px-3 pb-2 pt-1 shadow-[0_10px_20px_-8px_rgba(160,80,0,.45)] transition-transform hover:scale-110 ${
+                salah ? "opacity-40 grayscale" : ""
               } ${betul ? "anim-pop" : "anim-bobbing"}`}
             >
-              <span className="block text-5xl">🍖</span>
-              <span className="block text-2xl font-bold text-laut-tua">{p}</span>
+              <Makanan ukuran={72} />
+              <span className="angka block font-display text-2xl font-bold text-tinta">{p}</span>
             </button>
           );
         })}
@@ -96,15 +121,16 @@ function AreaMakan({ pilihan, onPilih, salahDipilih, jawab, status, kucingId, di
 function AreaBalon({ pilihan, onPilih, salahDipilih, jawab, status }) {
   const WARNA = ["#ff9bc4", "#ffd86e", "#7ee8b2", "#b79cff"];
   return (
-    <div className="relative mt-4 h-64 w-full overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-b from-[#dff3ff] to-[#a8dcff]">
+    <div className="relative mt-4 h-64 w-full overflow-hidden rounded-[28px] border-4 border-white bg-gradient-to-b from-[#e8f6ff] via-[#c9e8ff] to-[#ffd9ec]">
       <div className="flex h-full items-center justify-around px-2">
         {pilihan.map((p, i) => {
           const salah = salahDipilih.includes(p);
           const betul = status === "betul" && p === jawab;
           if (betul) {
             return (
-              <span key={p} className="anim-pop text-6xl">
-                ⭐✨
+              <span key={p} className="relative grid h-24 w-24 place-items-center">
+                <SinarPutar ukuran={160} />
+                <span className="anim-pop relative text-6xl">⭐</span>
               </span>
             );
           }
@@ -118,12 +144,19 @@ function AreaBalon({ pilihan, onPilih, salahDipilih, jawab, status }) {
               style={{ animation: `bobbing ${2 + i * 0.4}s ease-in-out ${i * 0.25}s infinite` }}
             >
               <svg width="86" height="118" viewBox="0 0 46 76" aria-hidden="true">
-                <ellipse cx="23" cy="26" rx="20" ry="25" fill={WARNA[i % WARNA.length]} />
-                <ellipse cx="16" cy="18" rx="6" ry="9" fill="#fff" opacity="0.45" />
+                <defs>
+                  <radialGradient id={`gb-${i}`} cx="35%" cy="30%" r="75%">
+                    <stop offset="0%" stopColor="#fff" stopOpacity="0.9" />
+                    <stop offset="35%" stopColor={WARNA[i % WARNA.length]} />
+                    <stop offset="100%" stopColor={WARNA[i % WARNA.length]} />
+                  </radialGradient>
+                </defs>
+                <ellipse cx="23" cy="26" rx="20" ry="25" fill={`url(#gb-${i})`} />
+                <ellipse cx="16" cy="17" rx="5" ry="8" fill="#fff" opacity="0.6" transform="rotate(-20 16 17)" />
                 <path d="M23 51 L18 58 L28 58 Z" fill={WARNA[i % WARNA.length]} />
                 <path d="M23 58 q 8 10 0 18" stroke="#fff" strokeWidth="2" fill="none" />
               </svg>
-              <span className="absolute inset-x-0 top-8 text-center text-2xl font-bold text-white drop-shadow">
+              <span className="angka absolute inset-x-0 top-8 text-center font-display text-3xl font-bold text-white drop-shadow-[0_2px_0_rgba(0,0,0,.25)]">
                 {p}
               </span>
             </button>
@@ -136,7 +169,9 @@ function AreaBalon({ pilihan, onPilih, salahDipilih, jawab, status }) {
 
 function AreaTikus({ pilihan, onPilih, salahDipilih, jawab, status, kecepatan, kucingId, dipakai }) {
   return (
-    <div className="relative mt-4 h-64 w-full overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-b from-[#e9ffe9] to-[#bff0d3]">
+    <div className="relative mt-4 h-72 w-full overflow-hidden rounded-[28px] border-4 border-white bg-gradient-to-b from-[#effff4] to-[#b6ecd0]">
+      <div className="absolute inset-x-0 top-[34%] border-t-4 border-dashed border-white/70" />
+      <div className="absolute inset-x-0 top-[61%] border-t-4 border-dashed border-white/70" />
       <div className="absolute bottom-1 left-1 z-10">
         <Kucing
           id={kucingId}
@@ -150,23 +185,28 @@ function AreaTikus({ pilihan, onPilih, salahDipilih, jawab, status, kecepatan, k
         const salah = salahDipilih.includes(p);
         const betul = status === "betul" && p === jawab;
         return (
-          <button
+          <div
             key={p}
-            type="button"
-            disabled={salah || status === "betul"}
-            onClick={() => onPilih(p)}
-            className={`absolute ${salah ? "opacity-30" : ""}`}
+            className="pointer-events-none absolute inset-x-0"
             style={{
-              top: `${8 + i * 27}%`,
+              top: `${6 + i * 27}%`,
               animation: `lari-tikus ${kecepatan + i * 0.9}s linear ${-i * 1.3}s infinite`,
+              animationPlayState: betul ? "paused" : "running",
             }}
           >
-            <span className="block text-5xl">🐭</span>
-            <span className="mt-[-6px] block rounded-full bg-white px-2 text-xl font-bold text-laut-tua shadow">
-              {p}
-            </span>
-            {betul && <span className="absolute -top-6 left-2 text-3xl anim-pop">✨</span>}
-          </button>
+            <button
+              type="button"
+              disabled={salah || status === "betul"}
+              onClick={() => onPilih(p)}
+              className={`pointer-events-auto relative flex w-fit flex-col items-center ${salah ? "opacity-30 grayscale" : ""}`}
+            >
+              <Tikus ukuran={78} senang={betul} />
+              <span className="angka -mt-2 block rounded-full border-[3px] border-white bg-gradient-to-b from-white to-[#eef4ff] px-2.5 font-display text-xl font-bold text-tinta shadow-[0_6px_12px_-4px_rgba(27,58,107,.5)]">
+                {p}
+              </span>
+              {betul && <span className="anim-pop absolute -top-6 left-2 text-3xl">✨</span>}
+            </button>
+          </div>
         );
       })}
     </div>
@@ -210,8 +250,8 @@ function AreaPuzzle({ pilihan, onPilih, salahDipilih, jawab, status, gambar, ter
               key={p}
               onClick={() => onPilih(p)}
               disabled={salah || status === "betul"}
-              warna={betul ? "#3fbd84" : salah ? "#c9d6e6" : "#4f8ef7"}
-              bayangan={betul ? "#2b9264" : salah ? "#a9b8cd" : "#2f6ede"}
+              warna={betul ? "#2fbf86" : salah ? "#c9d6e6" : "#3d6bff"}
+              bayangan={betul ? "#1f9064" : salah ? "#a9b8cd" : "#2445c9"}
               suara="pilih"
               className={`py-5 text-3xl ${betul ? "jawaban-benar" : ""}`}
             >
@@ -227,9 +267,9 @@ function AreaPuzzle({ pilihan, onPilih, salahDipilih, jawab, status, gambar, ter
 /* =============== Halaman game =============== */
 
 const PILIHAN_JENIS = [
-  { id: "kali", label: "Perkalian", emoji: "✖️", warna: "#4f8ef7", bayangan: "#2f6ede" },
-  { id: "bagi", label: "Pembagian", emoji: "➗", warna: "#3fbd84", bayangan: "#2b9264" },
-  { id: "campur", label: "Campur", emoji: "🎲", warna: "#a07bf5", bayangan: "#7a55d0" },
+  { id: "kali", label: "Perkalian", emoji: "✖️", warna: "#3d6bff", bayangan: "#2445c9" },
+  { id: "bagi", label: "Pembagian", emoji: "➗", warna: "#2fbf86", bayangan: "#1f9064" },
+  { id: "campur", label: "Campur", emoji: "🎲", warna: "#ff7eb6", bayangan: "#d44d8c" },
 ];
 
 export default function GameMain({ game }) {
@@ -367,7 +407,8 @@ export default function GameMain({ game }) {
                   onClick={() => mulai(j.id)}
                   warna={j.warna}
                   bayangan={j.bayangan}
-                  className="px-6 py-5 text-2xl"
+                  className="polkadot anim-muncul px-6 py-5 text-2xl"
+                  style={{ "--dot": "rgba(255,255,255,.16)" }}
                 >
                   {j.emoji} {j.label}
                 </Tombol>
@@ -380,25 +421,30 @@ export default function GameMain({ game }) {
         {/* ---------- main ---------- */}
         {fase === "main" && soal && (
           <div className="flex flex-col items-center">
-            <div className="flex w-full items-center gap-3">
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/70">
+            <div className="mt-1 flex w-full items-center gap-3">
+              <div className="kaca relative h-6 flex-1 rounded-full p-1">
                 <div
-                  className="h-full rounded-full bg-mint transition-all duration-500"
-                  style={{ width: `${(ke / jumlahSoal) * 100}%` }}
-                />
+                  className="relative h-full overflow-hidden rounded-full bg-gradient-to-r from-[#5fd6a4] via-[#6ec6ff] to-[#a98bff] transition-[width] duration-700 ease-[cubic-bezier(.34,1.56,.64,1)]"
+                  style={{ width: `${Math.max(6, (ke / jumlahSoal) * 100)}%` }}
+                >
+                  <span className="absolute inset-0" style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.28) 0 8px, transparent 8px 16px)", animation: "foil-geser 2s linear infinite", backgroundSize: "200% 100%" }} />
+                </div>
               </div>
-              <span className="rounded-full bg-white/90 px-3 py-1 text-sm font-bold text-laut-tua">
+              <span className="pil-koin angka !px-3 text-sm">
                 {ke + 1}/{jumlahSoal}
               </span>
-              <span className="rounded-full bg-mint px-3 py-1 text-sm font-bold text-white">✅ {benar}</span>
+              <span className="pil-koin angka !px-3 text-sm !text-[#1f9064]">✓ {benar}</span>
             </div>
 
             <div className={`kartu mt-3 w-full px-4 py-5 text-center ${status === "salah" ? "anim-getar" : ""}`}>
-              <div className="text-5xl font-bold text-laut-tua sm:text-6xl">
-                {soal.teks} = <span className="text-langit">?</span>
+              <div key={ke} className="anim-pop angka font-display text-6xl font-extrabold tracking-tight text-tinta sm:text-7xl">
+                {soal.teks} ={" "}
+                <span className={`inline-block ${status === "betul" ? "text-[#1f9064]" : "anim-bobbing text-laut"}`}>
+                  {status === "betul" ? soal.jawab : "?"}
+                </span>
               </div>
               {pesan && (
-                <div className="mt-2 text-lg font-semibold text-laut">{pesan}</div>
+                <div key={pesan} className="anim-pop mt-2 font-display text-xl font-bold text-laut">{pesan}</div>
               )}
 
               {game === "ikan" && <AreaIkan {...areaProps} />}
@@ -425,9 +471,10 @@ export default function GameMain({ game }) {
             <div className="flex justify-center">
               <Kucing id={state.kucingAktif} dipakai={state.dipakai} ekspresi="senang" aksi="tepuk" ukuran={150} />
             </div>
-            <h2 className="mt-2 text-3xl font-bold text-laut-tua">Hebat! 🎉</h2>
-            <div className="mt-2">
-              <Bintang jumlah={Math.round((benar / jumlahSoal) * 5)} ukuran={34} />
+            <h2 className="teks-emas mt-2 text-4xl font-extrabold">Hebat! 🎉</h2>
+            <div className="relative mt-3 grid place-items-center">
+              <SinarPutar ukuran={240} />
+              <Bintang jumlah={Math.round((benar / jumlahSoal) * 5)} ukuran={40} animasi />
             </div>
             <p className="mt-3 text-xl font-semibold text-laut-tua">
               Benar {benar} dari {jumlahSoal}

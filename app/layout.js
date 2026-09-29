@@ -1,11 +1,19 @@
-import { Fredoka } from "next/font/google";
+import { ViewTransition } from "react";
+import { Baloo_2, Fredoka } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/lib/store";
-import { StikerPopup } from "@/components/UI";
+import { LapisEfek, StikerPopup } from "@/components/UI";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
+});
+
+// Huruf judul yang bulat & tebal, ramah anak.
+const baloo = Baloo_2({
+  variable: "--font-baloo",
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
 });
 
 export const metadata = {
@@ -16,7 +24,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#6ec6ff",
+  themeColor: "#b9e3ff",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -25,12 +33,14 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="id" className={`${fredoka.variable} h-full antialiased`}>
+    <html lang="id" className={`${fredoka.variable} ${baloo.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <GameProvider>
-          {children}
+          <ViewTransition default="halaman">{children}</ViewTransition>
           <StikerPopup />
+          <LapisEfek />
         </GameProvider>
+        <div className="butiran" aria-hidden="true" />
       </body>
     </html>
   );

@@ -13,7 +13,7 @@ dan mini game — supaya belajar terasa seperti bermain, bukan mengerjakan PR.
 | **Level** (`/belajar/x3`) | Tabel yang dibacakan Mimi → latihan 10 soal pilihan ganda → bintang & hadiah |
 | **Mode Tantangan** (`/belajar/tantangan`) | Terbuka setelah semua level selesai: 15 soal campur, 4 pilihan |
 | **Bermain** (`/main`) | 5 mini game: Tangkap Ikan, Kasih Makan Kucing, Balon Pecah, Kejar Tikus, Puzzle Gambar |
-| **Hadiah** (`/hadiah`) | Tukar 🐟 ikan dengan aksesori Mimi, buka 5 karakter kucing, koleksi stiker prestasi |
+| **Hadiah** (`/hadiah`) | Butik Mimi: tukar 🐟 ikan dengan aksesori (termasuk **Koleksi Polkadot**), buka 6 kucing, koleksi stiker. Bisa "coba dulu" sebelum beli, dan setiap hadiah dibuka lewat animasi kado |
 | **Orang Tua** (`/ortu`) | Lama belajar, jumlah soal, benar/salah, ketepatan, grafik 7 hari, materi yang masih sulit |
 
 Prinsip yang dipakai:
@@ -23,6 +23,17 @@ Prinsip yang dipakai:
 - Tombol 💡 **Bantu aku** menampilkan konsepnya secara visual: perkalian sebagai
   kelompok ikan, pembagian sebagai ikan yang dibagi rata ke beberapa mangkuk.
 - Semua kemajuan tersimpan di perangkat (`localStorage`), tidak dikirim ke server.
+
+## Tampilan & interaksi
+
+- **Kucing 3D yang hidup** (`components/Kucing.jsx`): shading volumetrik, mata & kepala mengikuti
+  jari/kursor, kedip dan telinga berkedut acak, menguap, ekor mengibas. Bisa **dielus** (usap di atas
+  kucing): Mimi mendengkur dan keluar hati.
+- Hewan lain (ikan, tikus, burung, kupu-kupu) ada di `components/Hewan.jsx`.
+- Latar berlapis dengan parallax; **balon bisa diketuk sampai meletus** dan burung berkicau saat diketuk.
+- Efek suara dibuat dengan Web Audio: marimba, glockenspiel, meong anak kucing, dengkur, cicit mainan,
+  gelembung, fanfare; musik latar ala kotak musik.
+- Animasi memakai CSS + [Motion](https://motion.dev) (`motion/react`) dan menghormati `prefers-reduced-motion`.
 
 ## Menjalankan
 

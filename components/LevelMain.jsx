@@ -4,11 +4,18 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import Latar from "@/components/Latar";
 import Kucing from "@/components/Kucing";
-import { BarAtas, Bintang, Gelembung, KelompokBenda, Konfeti, Modal, Tombol } from "@/components/UI";
+import { BarAtas, Bintang, Gelembung, Ikon, KelompokBenda, Konfeti, Modal, SinarPutar, Tombol } from "@/components/UI";
 import { LEVELS, LEVEL_BY_ID, PUJIAN, SEMANGAT } from "@/lib/data";
 import { soalCampur, soalLevel } from "@/lib/quiz";
 import { bicara, bicaraHitung, sfx } from "@/lib/sound";
 import { useGame } from "@/lib/store";
+
+const WARNA_JAWAB = [
+  ["#3d6bff", "#2445c9"],
+  ["#ff7eb6", "#d44d8c"],
+  ["#a98bff", "#7b57e8"],
+  ["#ff9b54", "#d9702a"],
+];
 
 const JUMLAH_SOAL = 10;
 const JUMLAH_TANTANGAN = 15;
@@ -71,11 +78,12 @@ function TabelBelajar({ level, onPilih, barisAktif }) {
             key={k}
             type="button"
             onClick={() => onPilih(k)}
-            className={`flex items-center justify-between rounded-2xl border-4 px-4 py-3 text-lg font-bold transition-transform ${
+              className={`angka anim-muncul flex items-center justify-between rounded-[20px] border-[3px] px-4 py-3 font-display text-xl font-bold transition-transform duration-300 ease-[cubic-bezier(.34,1.56,.64,1)] ${
               aktif
-                ? "scale-105 border-kuning bg-kuning/40 text-laut-tua"
-                : "border-white bg-white/85 text-laut-tua hover:scale-105"
+                ? "scale-105 border-[#ffd66b] bg-gradient-to-b from-[#fff6d6] to-[#ffe9a8] text-tinta shadow-[0_10px_20px_-8px_rgba(184,116,26,.55)]"
+                : "border-white bg-white/90 text-tinta shadow-[0_6px_14px_-8px_rgba(27,58,107,.4)] hover:scale-105"
             }`}
+            style={{ animationDelay: `${k * 0.04}s` }}
           >
             <span>{teks}</span>
             <span className="text-laut">= {hasil}</span>
@@ -284,16 +292,18 @@ export default function LevelMain({ id }) {
           <div className="flex flex-col items-center">
             {/* progres */}
             <div className="mt-1 flex w-full items-center gap-3">
-              <div className="h-4 flex-1 overflow-hidden rounded-full bg-white/70">
+              <div className="kaca relative h-6 flex-1 rounded-full p-1">
                 <div
-                  className="h-full rounded-full bg-mint transition-all duration-500"
-                  style={{ width: `${(ke / soalList.length) * 100}%` }}
-                />
+                  className="relative h-full overflow-hidden rounded-full bg-gradient-to-r from-[#5fd6a4] via-[#6ec6ff] to-[#a98bff] transition-[width] duration-700 ease-[cubic-bezier(.34,1.56,.64,1)]"
+                  style={{ width: `${Math.max(6, (ke / soalList.length) * 100)}%` }}
+                >
+                  <span className="absolute inset-0" style={{ background: "repeating-linear-gradient(45deg, rgba(255,255,255,.28) 0 8px, transparent 8px 16px)", animation: "foil-geser 2s linear infinite", backgroundSize: "200% 100%" }} />
+                </div>
               </div>
-              <span className="rounded-full bg-white/90 px-3 py-1 text-sm font-bold text-laut-tua">
+              <span className="pil-koin angka !px-3 text-sm">
                 {ke + 1}/{soalList.length}
               </span>
-              <span className="rounded-full bg-mint px-3 py-1 text-sm font-bold text-white">✅ {benar}</span>
+              <span className="pil-koin angka !px-3 text-sm !text-[#1f9064]">✓ {benar}</span>
             </div>
 
             <div className="mt-3 flex items-end">
@@ -309,25 +319,31 @@ export default function LevelMain({ id }) {
 
             {/* soal */}
             <div
-              className={`kartu mt-2 w-full px-6 py-8 text-center ${status === "salah" ? "anim-getar" : ""}`}
+              key={ke}
+              className={`kartu anim-pop mt-2 w-full px-6 py-8 text-center ${status === "salah" ? "anim-getar" : ""}`}
             >
-              <div className="text-5xl font-bold text-laut-tua sm:text-6xl">
-                {soal.teks} = <span className="text-langit">?</span>
+              <div className="angka font-display text-6xl font-extrabold tracking-tight text-tinta sm:text-7xl">
+                {soal.teks} ={" "}
+                <span className={`inline-block ${status === "betul" ? "anim-pop text-[#1f9064]" : "anim-bobbing text-laut"}`}>
+                  {status === "betul" ? soal.jawab : "?"}
+                </span>
               </div>
 
               <div className={`mt-6 grid gap-3 ${soal.pilihan.length > 3 ? "grid-cols-2" : "grid-cols-3"}`}>
-                {soal.pilihan.map((p) => {
+                {soal.pilihan.map((p, i) => {
                   const salah = salahDipilih.includes(p);
                   const betul = status === "betul" && p === soal.jawab;
+                  const [w, bw] = WARNA_JAWAB[i % WARNA_JAWAB.length];
                   return (
                     <Tombol
                       key={p}
                       onClick={() => jawab(p)}
                       disabled={salah || status === "betul"}
-                      warna={betul ? "#3fbd84" : salah ? "#c9d6e6" : "#4f8ef7"}
-                      bayangan={betul ? "#2b9264" : salah ? "#a9b8cd" : "#2f6ede"}
-                      suara="pilih"
-                      className={`py-6 text-4xl ${betul ? "jawaban-benar anim-pop" : ""}`}
+                      warna={betul ? "#2fbf86" : salah ? "#c9d6e6" : w}
+                      bayangan={betul ? "#1f9064" : salah ? "#a9b8cd" : bw}
+                      suara="gelembung"
+                      className={`angka anim-muncul py-6 text-4xl ${betul ? "jawaban-benar anim-pop" : ""} ${salah ? "anim-geleng" : ""}`}
+                      style={{ animationDelay: `${i * 0.06}s` }}
                     >
                       {p}
                     </Tombol>
@@ -341,9 +357,9 @@ export default function LevelMain({ id }) {
                   setBantuan((b) => !b);
                   sfx("pilih");
                 }}
-                className="mt-5 rounded-full bg-kuning px-5 py-2 text-lg font-bold text-laut-tua shadow"
+                className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#fff1b8] to-[#ffd66b] px-5 py-2 font-display text-lg font-bold text-tinta shadow-[inset_0_2px_0_rgba(255,255,255,.7),0_6px_0_#e0a82e,0_12px_20px_-8px_rgba(184,116,26,.5)] transition-transform active:translate-y-1"
               >
-                💡 {bantuan ? "Sembunyikan bantuan" : "Bantu aku!"}
+                <Ikon nama="lampu" ukuran={22} /> {bantuan ? "Sembunyikan bantuan" : "Bantu aku!"}
               </button>
 
               {bantuan && <BantuanVisual soal={soal} />}
@@ -363,9 +379,10 @@ export default function LevelMain({ id }) {
                 ukuran={150}
               />
             </div>
-            <h2 className="mt-2 text-3xl font-bold text-laut-tua">Selesai! 🎉</h2>
-            <div className="mt-2">
-              <Bintang jumlah={hasil.bintang} ukuran={36} />
+            <h2 className="teks-emas mt-2 text-4xl font-extrabold">Selesai! 🎉</h2>
+            <div className="relative mt-3 grid place-items-center">
+              <SinarPutar ukuran={240} />
+              <Bintang jumlah={hasil.bintang} ukuran={42} animasi />
             </div>
             <p className="mt-3 text-xl font-semibold text-laut-tua">
               Benar {hasil.benar} dari {totalSoal}
