@@ -4,7 +4,18 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Latar from "@/components/Latar";
 import Kucing from "@/components/Kucing";
-import { Gelembung, Ikon, KartuMiring, Modal, PilKoin, SinarPutar, Tombol } from "@/components/UI";
+import Obrolan, { useMimiBicara } from "@/components/Obrolan";
+import {
+  Gelembung,
+  Ikon,
+  KartuMiring,
+  Modal,
+  PemutarMusik,
+  PilKoin,
+  SinarPutar,
+  Tombol,
+  TombolLayarPenuh,
+} from "@/components/UI";
 import { PUJIAN } from "@/lib/data";
 import { bicara, sfx } from "@/lib/sound";
 import { useGame } from "@/lib/store";
@@ -60,6 +71,9 @@ export default function Beranda() {
   const [aksi, setAksi] = useState("lambai");
   const [isiNama, setIsiNama] = useState("");
   const [bukaSetelan, setBukaSetelan] = useState(false);
+  const [ngobrol, setNgobrol] = useState(false);
+  const [suasana, setSuasana] = useState("senang");
+  const bicaraMimi = useMimiBicara();
 
   // Nama kosong = anak baru pertama kali membuka aplikasi.
   const tanyaNama = siap && !state.namaAnak;
@@ -101,6 +115,7 @@ export default function Beranda() {
               <span className="hidden text-sm font-semibold text-tinta-lembut sm:inline">hari</span>
             </span>
           )}
+          <TombolLayarPenuh />
           <Tombol
             warna="#ffffff"
             bayangan="#c9dcf5"
@@ -121,10 +136,13 @@ export default function Beranda() {
       <p className="kaca anim-muncul mt-3 rounded-full px-4 py-1.5 text-sm font-semibold text-tinta sm:text-base" style={{ animationDelay: ".16s" }}>
         Perkalian &amp; Pembagian 1–10
       </p>
+      <PemutarMusik className="anim-muncul mt-2" />
 
       {/* Mimi di atas panggung */}
       <section className="relative mt-3 flex flex-col items-center" aria-label="Mimi">
-        <Gelembung className="mb-2">{sapaan}</Gelembung>
+        <div className={`transition-opacity duration-300 ${ngobrol ? "opacity-0" : "opacity-100"}`}>
+          <Gelembung className="mb-2">{sapaan}</Gelembung>
+        </div>
         <div className="relative grid place-items-center">
           <SinarPutar ukuran={360} warna="rgba(255,255,255,.55)" />
           {/* kilau yang mengorbit */}
@@ -140,7 +158,31 @@ export default function Beranda() {
             </span>
           ))}
           <button type="button" onClick={sentuhMimi} aria-label="Sentuh Mimi" className="relative z-10 bg-transparent">
-            <Kucing id={state.kucingAktif} dipakai={state.dipakai} ekspresi="senang" aksi={aksi} ukuran={230} />
+            <Kucing
+              id={state.kucingAktif}
+              dipakai={state.dipakai}
+              ekspresi={ngobrol ? suasana : "senang"}
+              aksi={aksi}
+              bicara={bicaraMimi}
+              ukuran={230}
+            />
+          </button>
+          {/* ajak Mimi mengobrol */}
+          <button
+            type="button"
+            onClick={() => {
+              nyalakanAudio();
+              sfx("pilih");
+              setNgobrol(true);
+            }}
+            className="tombol-ngobrol absolute -right-4 top-6 z-20 flex flex-col items-center gap-0.5 sm:-right-14"
+            aria-label="Ngobrol dengan Mimi"
+          >
+            <span className="relative grid h-14 w-14 place-items-center rounded-full bg-mawar text-white shadow-[inset_0_-4px_0_rgb(0_0_0/.12),0_12px_22px_-10px_rgb(212_77_140/.9)]">
+              <span className="absolute inset-0 rounded-full border-4 border-mawar/60" style={{ animation: "denyut-cincin 1.8s var(--ease-halus) infinite" }} />
+              <Ikon nama="obrolan" ukuran={28} />
+            </span>
+            <span className="kaca rounded-full px-2.5 py-0.5 text-xs font-bold text-tinta">Ngobrol</span>
           </button>
           {/* panggung */}
           <div className="relative -mt-9 h-12 w-64 rounded-[50%] bingkai-emas !rounded-[50%]">
@@ -184,6 +226,8 @@ export default function Beranda() {
       >
         👨‍👩‍👧 Ruang Orang Tua
       </Link>
+
+      <Obrolan terbuka={ngobrol} onTutup={() => setNgobrol(false)} onSuasana={setSuasana} />
 
       {/* modal nama */}
       <Modal terbuka={tanyaNama}>
@@ -240,6 +284,10 @@ export default function Beranda() {
               }}
             />
           ))}
+          <div className="flex items-center justify-between rounded-[22px] bg-awan px-4 py-3 text-lg font-semibold text-tinta">
+            <span>Lagu</span>
+            <PemutarMusik />
+          </div>
         </div>
       </Modal>
     </main>

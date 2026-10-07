@@ -446,40 +446,82 @@ button {
 }
 
 /* ---------- Kucing 3D: perilaku lewat kelas CSS (tanpa render ulang React) ---------- */
+/* Gerak idle dibuat berlapis dengan durasi yang tidak sama (badan 2.9s, kepala 5.3s,
+   telinga 4.1s / 4.7s, ekor 3.6s) supaya tidak pernah terlihat berulang kaku. */
 .kucing-3d { touch-action: none; cursor: grab; }
 .kucing-3d:active { cursor: grabbing; }
 .kucing-miring {
-  transform: rotateY(calc(var(--mx, 0) * 14deg)) rotateX(calc(var(--my, 0) * -8deg));
+  transform: rotateY(calc(var(--mx, 0) * 16deg)) rotateX(calc(var(--my, 0) * -9deg));
   transform-style: preserve-3d;
-  transition: transform .25s cubic-bezier(.22,1,.36,1);
+  transition: transform .3s cubic-bezier(.22,1,.36,1);
 }
-.kucing-kepala { transform: translate(calc(var(--mx, 0) * 3px), calc(var(--my, 0) * 2px)); }
-.kucing-wajah { transform: translate(calc(var(--mx, 0) * 6px), calc(var(--my, 0) * 4px)); }
-.kucing-pupil { transform: translate(calc(var(--mx, 0) * 3px), calc(var(--my, 0) * 3.5px)); }
-.kucing-3d .mata { transform-box: fill-box; transform-origin: center; transition: transform .08s; }
-.kucing-3d.kedip .mata { transform: scaleY(.08); }
-.telinga-kiri, .telinga-kanan { transform-box: fill-box; transition: transform .12s; }
-.telinga-kiri { transform-origin: 80% 100%; }
-.telinga-kanan { transform-origin: 20% 100%; }
-.kucing-3d.kedut-kiri .telinga-kiri { animation: kedut-telinga .42s ease-in-out; }
-.kucing-3d.kedut-kanan .telinga-kanan { animation: kedut-telinga-k .42s ease-in-out; }
-@keyframes kedut-telinga { 0%,100% { transform: rotate(0) } 30% { transform: rotate(-14deg) } 60% { transform: rotate(6deg) } }
-@keyframes kedut-telinga-k { 0%,100% { transform: rotate(0) } 30% { transform: rotate(14deg) } 60% { transform: rotate(-6deg) } }
-.kucing-ekor { transform-box: view-box; transform-origin: 148px 158px; }
-.kucing-3d.kibas .kucing-ekor { animation: kibas-ekor .7s ease-in-out; }
-@keyframes kibas-ekor { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-16deg) } 60% { transform: rotate(12deg) } }
+.anim-napas-kucing { animation: napas-kucing 2.9s cubic-bezier(.45,0,.55,1) infinite; }
+@keyframes napas-kucing {
+  0%, 100% { transform: scale(1, 1) translateY(0); }
+  45% { transform: scale(1.028, .975) translateY(1px); }
+  70% { transform: scale(.995, 1.012) translateY(-1px); }
+}
+.kucing-bayangan { transform-box: fill-box; transform-origin: center; animation: bayangan-napas 2.9s cubic-bezier(.45,0,.55,1) infinite; }
+@keyframes bayangan-napas { 0%, 100% { transform: scaleX(1); } 45% { transform: scaleX(1.06); } }
+
+.kucing-3d .kucing-kepala {
+  transform-box: view-box;
+  transform-origin: 100px 132px;
+  transform: translate(calc(var(--mx, 0) * 4px), calc(var(--my, 0) * 2.5px)) rotate(calc(var(--mx, 0) * 5deg));
+}
+.kepala-ayun { transform-box: view-box; transform-origin: 100px 132px; animation: kepala-ayun 5.3s cubic-bezier(.45,0,.55,1) infinite; }
+@keyframes kepala-ayun {
+  0%, 100% { rotate: 0deg; translate: 0 0; }
+  25% { rotate: -3.5deg; translate: -1px 1px; }
+  50% { rotate: 0.5deg; translate: 0 -1.5px; }
+  75% { rotate: 3deg; translate: 1px 0.5px; }
+}
+.kucing-wajah { transform: translate(calc(var(--mx, 0) * 7px), calc(var(--my, 0) * 4.5px)); }
+.kucing-pupil { transform: translate(calc(var(--mx, 0) * 3.5px), calc(var(--my, 0) * 4px)); }
+.kucing-3d .mata { transform-box: fill-box; transform-origin: center 60%; transition: transform .07s; }
+.kucing-3d.kedip .mata { transform: scaleY(.06); }
+.kilau-mata { transform-box: fill-box; transform-origin: center; animation: kilau-mata 3.2s ease-in-out infinite; }
+@keyframes kilau-mata { 0%, 100% { transform: scale(1); } 50% { transform: scale(.82); } }
+
+.telinga-kiri, .telinga-kanan { transform-box: fill-box; }
+.telinga-kiri { transform-origin: 85% 100%; animation: telinga-idle 4.1s ease-in-out infinite; }
+.telinga-kanan { transform-origin: 15% 100%; animation: telinga-idle-k 4.7s ease-in-out infinite; }
+@keyframes telinga-idle { 0%, 100% { rotate: 0deg; } 50% { rotate: -4deg; } }
+@keyframes telinga-idle-k { 0%, 100% { rotate: 0deg; } 50% { rotate: 4deg; } }
+.kucing-3d.kedut-kiri .telinga-kiri { animation: kedut-telinga .46s ease-in-out; }
+.kucing-3d.kedut-kanan .telinga-kanan { animation: kedut-telinga-k .46s ease-in-out; }
+@keyframes kedut-telinga { 0%,100% { rotate: 0deg } 25% { rotate: -16deg } 55% { rotate: 7deg } 80% { rotate: -3deg } }
+@keyframes kedut-telinga-k { 0%,100% { rotate: 0deg } 25% { rotate: 16deg } 55% { rotate: -7deg } 80% { rotate: 3deg } }
+
+.kucing-ekor { transform-box: view-box; transform-origin: 144px 176px; }
+.kucing-3d.kibas .kucing-ekor { animation: kibas-ekor .8s cubic-bezier(.34,1.56,.64,1); }
+@keyframes kibas-ekor { 0%,100% { transform: rotate(0) } 25% { transform: rotate(-18deg) } 60% { transform: rotate(12deg) } 85% { transform: rotate(-4deg) } }
+
 .mata-senang { opacity: 0; }
-.mata-senang.tampil { opacity: 1; }
-.mulut-menguap { opacity: 0; }
+.mulut-menguap, .mulut-bicara { opacity: 0; }
+.kucing-3d.tertawa .mata-buka { opacity: 0; }
+.kucing-3d.tertawa .mata-senang { opacity: 1; }
 .kucing-3d.menguap .mulut-menguap, .kucing-3d.dielus .mulut-menguap { opacity: 1; }
 .kucing-3d.menguap .mulut-biasa, .kucing-3d.dielus .mulut-biasa { opacity: 0; }
 .kucing-3d.menguap .mata-buka, .kucing-3d.dielus .mata-buka { opacity: 0; }
 .kucing-3d.menguap .mata-senang, .kucing-3d.dielus .mata-senang { opacity: 1; }
 .kucing-3d.dielus .mulut-menguap ellipse:first-child { ry: 6; }
-.kucing-3d.dielus .kucing-pipi { opacity: 1; transform-box: fill-box; transform-origin: center; transform: scale(1.35); }
+.kucing-pipi { transform-box: fill-box; transform-origin: center; transition: transform .3s var(--ease-pegas); }
+.kucing-3d.dielus .kucing-pipi { transform: scale(1.3); }
 .kucing-3d.dielus .kucing-kepala { animation: dengkur-kepala .35s ease-in-out infinite; }
 @keyframes dengkur-kepala { 0%,100% { rotate: -2deg } 50% { rotate: 2deg } }
-.kucing-3d .kucing-kepala { transform-box: view-box; transform-origin: 100px 130px; }
+
+/* Mimi berbicara: mulut membuka-menutup tidak beraturan, kepala sedikit mengangguk */
+.kucing-3d.bicara .mulut-biasa { opacity: 0; }
+.kucing-3d.bicara .mulut-bicara { opacity: 1; }
+.mulut-bicara { transform-box: fill-box; transform-origin: center 30%; }
+.kucing-3d.bicara .mulut-bicara { animation: mulut-bicara .62s linear infinite; }
+@keyframes mulut-bicara {
+  0% { transform: scaleY(.25); } 18% { transform: scaleY(1); } 32% { transform: scaleY(.45); }
+  50% { transform: scaleY(.9); } 66% { transform: scaleY(.2); } 82% { transform: scaleY(.75); } 100% { transform: scaleY(.25); }
+}
+.kucing-3d.bicara .kepala-ayun { animation: kepala-bicara 1.1s ease-in-out infinite; }
+@keyframes kepala-bicara { 0%, 100% { rotate: -2deg; translate: 0 0; } 50% { rotate: 2deg; translate: 0 1.5px; } }
 
 @keyframes kedip-mata { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(0.1); } }
 @keyframes kepak-sayap { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(-0.7); } }

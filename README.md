@@ -26,13 +26,23 @@ Prinsip yang dipakai:
 
 ## Tampilan & interaksi
 
-- **Kucing 3D yang hidup** (`components/Kucing.jsx`): shading volumetrik, mata & kepala mengikuti
-  jari/kursor, kedip dan telinga berkedut acak, menguap, ekor mengibas. Bisa **dielus** (usap di atas
-  kucing): Mimi mendengkur dan keluar hati.
+- **Kucing chibi 3D** (`components/Kucing.jsx`): kepala mochi besar, mata berkilau, shading volumetrik
+  + cahaya tepi (fresnel). Gerak idle berlapis dengan tempo berbeda (badan bernapas, kepala mengayun,
+  telinga bergoyang, ekor melengkung seperti pegas) supaya tidak kaku. Mata & kepala mengikuti
+  jari/kursor, kedip/tertawa/menguap acak, mulut bergerak saat Mimi berbicara. Bisa **dielus**:
+  Mimi mendengkur dan keluar hati.
+- **Ngobrol dengan Mimi** (`components/Obrolan.jsx`, isi di `lib/obrolan.js`): tombol *Ngobrol* di beranda
+  membuka panel chat. Mimi bertanya dengan suara, anak menjawab lewat tombol besar: menanyakan kabar,
+  tebak-tebakan (jawaban benar dapat +1 ikan), cerita fakta kucing, hobi, ajakan belajar/bermain.
+- **Layar penuh**: tombol di bar atas (disembunyikan otomatis bila browser tidak mendukung, misal iPhone).
 - Hewan lain (ikan, tikus, burung, kupu-kupu) ada di `components/Hewan.jsx`.
 - Latar berlapis dengan parallax; **balon bisa diketuk sampai meletus** dan burung berkicau saat diketuk.
 - Efek suara dibuat dengan Web Audio: marimba, glockenspiel, meong anak kucing, dengkur, cicit mainan,
-  gelembung, fanfare; musik latar ala kotak musik.
+  gelembung, fanfare.
+- **Soundtrack 6 tema yang bergantian** (±75 detik per lagu): *Kotak Musik Mimi*, *Piknik Ceria* (ukulele),
+  *Pesta Pantai* (steel drum), *Parade Mainan* (marching), *Awan Kapas* (lagu tidur), *Sirkus Kucing*.
+  Semua dikarang sendiri dan dimainkan langsung oleh Web Audio, jadi **bebas lisensi** dan tanpa file mp3.
+  Judul lagu tampil di beranda dengan tombol ganti lagu.
 - Animasi memakai CSS + [Motion](https://motion.dev) (`motion/react`) dan menghormati `prefers-reduced-motion`.
 
 ## Menjalankan
@@ -53,9 +63,13 @@ Buka http://localhost:3000.
 
 ## Suara Mimi
 
-Suara Mimi memakai klip **ElevenLabs** (suara bawaan *Jessica*, model
-`eleven_flash_v2_5` dengan `language_code: "id"`) yang sudah dibuat sebelumnya dan
-disimpan sebagai file statis di `public/suara/`.
+Suara Mimi adalah **suara anak perempuan**: klip **ElevenLabs** (suara bawaan *Jessica*, model
+`eleven_flash_v2_5` dengan `language_code: "id"`) yang lalu diolah ffmpeg (`rubberband`:
+nada + formant dinaikkan ×1,24, tempo tetap) dan disimpan sebagai file statis di `public/suara/`.
+
+> Akun ElevenLabs tier gratis hanya boleh memakai suara *premade* lewat API — suara anak asli
+> dari library (misal "Kak Ceria") dan Voice Design butuh paket berbayar. Bila nanti berlangganan,
+> isi `ELEVENLABS_VOICE_ID` dengan suara anak tersebut dan `ANAK_NADA=1` di `.env.local`.
 
 Aplikasi **tidak pernah memanggil API ElevenLabs saat dipakai** — jadi tidak ada
 API key di browser, tidak ada biaya per pemakaian, dan suara tetap keluar walau
@@ -66,11 +80,14 @@ Untuk membuat ulang klip (misalnya ingin ganti suara):
 
 ```bash
 echo "ELEVENLABS_API_KEY=xxxxx" > .env.local
-npm run suara -- --ulang
+npm run suara -- --ulang     # rekam ulang semua (memakai kuota)
+npm run suara -- --olah      # olah ulang nada dari rekaman mentah saja (tanpa kuota)
 ```
 
+Rekaman mentah disimpan di `.suara-mentah/` (tidak di-commit). Butuh `ffmpeg` di PATH.
+
 Ganti suara lewat `ELEVENLABS_VOICE_ID` (lihat `scripts/buat-suara.mjs`).
-Daftar kalimat & angka ada di `lib/suara-daftar.js`.
+Daftar kalimat & angka ada di `lib/suara-daftar.js`, kalimat obrolan di `lib/obrolan.js`.
 
 > `.env.local` sudah masuk `.gitignore`. **Jangan pernah** commit API key.
 

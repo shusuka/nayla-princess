@@ -5,12 +5,36 @@ import { KUCING_BY_ID } from "@/lib/data";
 import { hentikanDengkur, mulaiDengkur, sfx } from "@/lib/sound";
 import { campur, daftarkanPelacak } from "@/lib/gerak";
 
+// Bentuk dasar kucing chibi (koordinat 200x200). Dipakai juga sebagai clip-path totol.
+const KEPALA_D =
+  "M100 38 C 133 38 155 58 156 86 C 157 99 154 108 150 114 L 157 118 C 152 122 147 125 142 126 " +
+  "L 146 131 C 132 139 116 141 100 141 C 84 141 68 139 54 131 L 58 126 C 53 125 48 122 43 118 " +
+  "L 50 114 C 46 108 43 99 44 86 C 45 58 67 38 100 38 Z";
+const BADAN_D =
+  "M100 114 C 129 114 147 132 150 157 C 153 174 141 188 120 189 L 80 189 C 59 188 47 174 50 157 C 53 132 71 114 100 114 Z";
+const TELINGA_KIRI_D = "M54 72 C 46 52 43 32 49 17 C 52 11 59 12 64 16 C 75 25 85 35 92 45 Z";
+const TELINGA_KIRI_DALAM_D = "M59 62 C 55 48 54 35 57 26 C 66 32 74 40 81 47 Z";
+const cermin = (d) => d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, (_, x, y) => `${200 - Number(x)} ${y}`);
+const TELINGA_KANAN_D = cermin(TELINGA_KIRI_D);
+const TELINGA_KANAN_DALAM_D = cermin(TELINGA_KIRI_DALAM_D);
+
+const EKOR = [
+  "M144 176 C 176 180 190 152 176 128 C 170 118 176 106 186 110",
+  "M144 176 C 182 172 194 140 172 120 C 164 112 168 100 178 100",
+  "M144 176 C 172 186 196 160 184 134 C 178 122 186 112 194 118",
+];
+const EKOR_NILAI = [EKOR[0], EKOR[1], EKOR[0], EKOR[2], EKOR[0]].join("; ");
+
 /**
- * Kucing SVG "3D": shading volumetrik, mata mengikuti jari/kursor, kepala menoleh,
- * kedip & telinga berkedut acak, menguap, dan bisa dielus (mendengkur + hati).
+ * Kucing chibi "3D": kepala besar bulat seperti mochi, mata berkilau besar,
+ * shading volumetrik + cahaya tepi (fresnel), dan gerak idle berlapis
+ * (kepala mengayun, telinga bergoyang, ekor melengkung, badan bernapas)
+ * sehingga tidak terlihat kaku. Mata & kepala mengikuti jari/kursor,
+ * kedip / kedut telinga / tertawa / menguap acak, bisa dielus (mendengkur + hati).
  *
  * ekspresi: diam | senang | sedih | kaget | tidur
  * aksi: none | lompat | goyang | putar | lambai | tepuk
+ * bicara: true saat Mimi sedang berbicara (mulut bergerak)
  */
 export default function Kucing({
   id = "mimi",
@@ -20,6 +44,7 @@ export default function Kucing({
   dipakai = {},
   className = "",
   bisaDielus = true,
+  bicara = false,
 }) {
   const k = KUCING_BY_ID[id] || KUCING_BY_ID.mimi;
   const w = k.warna;
@@ -28,12 +53,13 @@ export default function Kucing({
   const wadahHati = useRef(null);
 
   // Warna turunan untuk shading 3D
-  const terang = campur(w.bulu, "#ffffff", 0.75);
+  const terang = campur(w.bulu, "#ffffff", 0.8);
   const tengah = w.bulu;
-  const gelap = campur(w.bulu2, w.garis, 0.55);
-  const garis = campur(w.garis, "#1b3a6b", 0.18);
+  const gelap = campur(w.bulu2, w.garis, 0.6);
+  const garis = campur(w.garis, "#1b3a6b", 0.22);
+  const tepi = campur(w.bulu2, "#9fd8ff", 0.55); // cahaya tepi kebiruan dari langit
 
-  // Pelacak mata/kepala + perilaku acak (kedip, telinga, menguap) tanpa render ulang React.
+  // Pelacak mata/kepala + perilaku acak (kedip, telinga, tertawa, menguap) tanpa render ulang React.
   useEffect(() => {
     const el = akar.current;
     if (!el) return undefined;
@@ -46,17 +72,19 @@ export default function Kucing({
     let hidup = true;
     const jadwal = () => {
       if (!hidup) return;
-      const tunggu = 1800 + Math.random() * 3200;
+      const tunggu = 1500 + Math.random() * 3000;
       timers.push(
         setTimeout(() => {
           const r = Math.random();
-          if (r < 0.55) {
-            kelasSebentar("kedip", 160);
-            if (Math.random() < 0.3) timers.push(setTimeout(() => kelasSebentar("kedip", 140), 260));
-          } else if (r < 0.78) {
-            kelasSebentar(Math.random() < 0.5 ? "kedut-kiri" : "kedut-kanan", 420);
-          } else if (r < 0.9) {
-            kelasSebentar("kibas", 700);
+          if (r < 0.5) {
+            kelasSebentar("kedip", 150);
+            if (Math.random() < 0.35) timers.push(setTimeout(() => kelasSebentar("kedip", 130), 250));
+          } else if (r < 0.7) {
+            kelasSebentar(Math.random() < 0.5 ? "kedut-kiri" : "kedut-kanan", 460);
+          } else if (r < 0.82) {
+            kelasSebentar("kibas", 800);
+          } else if (r < 0.93) {
+            kelasSebentar("tertawa", 1100);
           } else {
             kelasSebentar("menguap", 1500);
           }
@@ -141,14 +169,19 @@ export default function Kucing({
         ? "anim-goyang"
         : aksi === "putar"
           ? "anim-putar"
-          : "anim-napas";
+          : "anim-napas-kucing";
 
-  const matanya = ekspresi === "diam" || ekspresi === "kaget" || ekspresi === "sedih";
+  const mataBuka = ekspresi !== "tidur";
+  const kaget = ekspresi === "kaget";
+  const sedih = ekspresi === "sedih";
+  const senang = ekspresi === "senang";
+  const bulu = `url(#${u}-badan)`;
+  const kulitTepi = { stroke: garis, strokeOpacity: 0.35, strokeWidth: 2 };
 
   return (
     <div
       ref={akar}
-      className={`kucing-3d relative inline-block ${className}`}
+      className={`kucing-3d relative inline-block ${bicara ? "bicara" : ""} ${className}`}
       style={{ width: ukuran, height: ukuran, perspective: 600 }}
       onPointerDown={mulaiElus}
       onPointerMove={gerakElus}
@@ -163,86 +196,115 @@ export default function Kucing({
         }
       }}
     >
-      <div className={`h-full w-full ${kelasAksi}`} style={{ transformOrigin: "50% 88%" }}>
+      <div className={`h-full w-full ${kelasAksi}`} style={{ transformOrigin: "50% 92%" }}>
         <div className="kucing-miring h-full w-full">
           <svg viewBox="0 0 200 200" width="100%" height="100%" aria-hidden="true" style={{ overflow: "visible" }}>
             <defs>
-              <radialGradient id={`${u}-badan`} cx="38%" cy="28%" r="80%">
+              <radialGradient id={`${u}-badan`} cx="36%" cy="24%" r="85%">
                 <stop offset="0%" stopColor={terang} />
-                <stop offset="45%" stopColor={tengah} />
+                <stop offset="42%" stopColor={tengah} />
                 <stop offset="100%" stopColor={gelap} />
               </radialGradient>
-              <radialGradient id={`${u}-kepala`} cx="36%" cy="26%" r="78%">
-                <stop offset="0%" stopColor={terang} />
-                <stop offset="50%" stopColor={tengah} />
-                <stop offset="100%" stopColor={gelap} />
+              {/* cahaya tepi (fresnel): tengah bening, pinggir berpendar → kesan bulat 3D */}
+              <radialGradient id={`${u}-tepi`} cx="44%" cy="40%" r="62%">
+                <stop offset="72%" stopColor={tepi} stopOpacity="0" />
+                <stop offset="100%" stopColor={tepi} stopOpacity="0.75" />
               </radialGradient>
-              <radialGradient id={`${u}-moncong`} cx="50%" cy="35%" r="65%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+              {/* bayangan bawah (ambient occlusion) */}
+              <linearGradient id={`${u}-ao`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="55%" stopColor={gelap} stopOpacity="0" />
+                <stop offset="100%" stopColor={campur(gelap, "#1b3a6b", 0.35)} stopOpacity="0.55" />
+              </linearGradient>
+              <radialGradient id={`${u}-dada`} cx="50%" cy="30%" r="70%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.98" />
+                <stop offset="100%" stopColor={terang} stopOpacity="0.6" />
+              </radialGradient>
+              <radialGradient id={`${u}-moncong`} cx="50%" cy="38%" r="62%">
+                <stop offset="0%" stopColor="#ffffff" stopOpacity="0.98" />
                 <stop offset="100%" stopColor={terang} stopOpacity="0" />
               </radialGradient>
-              <radialGradient id={`${u}-telinga`} cx="50%" cy="70%" r="70%">
-                <stop offset="0%" stopColor={campur(w.telinga, "#ffffff", 0.35)} />
-                <stop offset="100%" stopColor={campur(w.telinga, "#c2327a", 0.2)} />
+              <radialGradient id={`${u}-telinga`} cx="50%" cy="78%" r="80%">
+                <stop offset="0%" stopColor={campur(w.telinga, "#ffffff", 0.45)} />
+                <stop offset="70%" stopColor={w.telinga} />
+                <stop offset="100%" stopColor={campur(w.telinga, "#c2327a", 0.3)} />
               </radialGradient>
-              <radialGradient id={`${u}-mata`} cx="50%" cy="60%" r="60%">
-                <stop offset="0%" stopColor={campur(w.mata, "#ffffff", 0.45)} />
-                <stop offset="55%" stopColor={w.mata} />
-                <stop offset="100%" stopColor={campur(w.mata, "#0b1633", 0.55)} />
-              </radialGradient>
+              <linearGradient id={`${u}-iris`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={campur(w.mata, "#0b1633", 0.55)} />
+                <stop offset="45%" stopColor={w.mata} />
+                <stop offset="100%" stopColor={campur(w.mata, "#bff0ff", 0.6)} />
+              </linearGradient>
               <radialGradient id={`${u}-pipi`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#ff7eb6" stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#ff7eb6" stopOpacity="0" />
+                <stop offset="0%" stopColor="#ff6fa8" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#ff6fa8" stopOpacity="0" />
               </radialGradient>
               <linearGradient id={`${u}-hidung`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ffb3cf" />
-                <stop offset="100%" stopColor="#f0628f" />
+                <stop offset="0%" stopColor="#ffc2d8" />
+                <stop offset="100%" stopColor="#ee5b8c" />
               </linearGradient>
+              <radialGradient id={`${u}-kaki`} cx="45%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="#ffffff" />
+                <stop offset="60%" stopColor={terang} />
+                <stop offset="100%" stopColor={gelap} />
+              </radialGradient>
               <filter id={`${u}-lembut`} x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="4" />
               </filter>
-              {w.totol && (
-                <>
-                  <clipPath id={`${u}-klip-kepala`}>
-                    <circle cx="100" cy="88" r="49" />
-                  </clipPath>
-                  <clipPath id={`${u}-klip-badan`}>
-                    <ellipse cx="100" cy="146" rx="49" ry="39" />
-                  </clipPath>
-                </>
-              )}
+              <filter id={`${u}-kabur`} x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="1.6" />
+              </filter>
+              <clipPath id={`${u}-klip-kepala`}>
+                <path d={KEPALA_D} />
+              </clipPath>
+              <clipPath id={`${u}-klip-badan`}>
+                <path d={BADAN_D} />
+              </clipPath>
               <DefsAksesori u={u} />
             </defs>
 
-            {/* bayangan tanah */}
-            <ellipse cx="100" cy="190" rx="54" ry="8" fill="#1b3a6b" opacity="0.22" filter={`url(#${u}-lembut)`} className="kucing-bayangan" />
+            {/* bayangan tanah: ikut "bernapas" */}
+            <ellipse cx="100" cy="191" rx="52" ry="8" fill="#1b3a6b" opacity="0.24" filter={`url(#${u}-lembut)`} className="kucing-bayangan" />
 
-            {/* ekor */}
+            {/* ekor melengkung, mengayun pelan seperti pegas */}
             <g className="kucing-ekor">
-              <path d="M148 158 C 186 152, 190 118, 170 104" stroke={gelap} strokeWidth="17" strokeLinecap="round" fill="none">
-                <animate attributeName="d" dur="2.8s" repeatCount="indefinite"
-                  values="M148 158 C 186 152, 190 118, 170 104; M148 158 C 190 146, 196 124, 182 108; M148 158 C 186 152, 190 118, 170 104" />
+              <path d={EKOR[0]} stroke={gelap} strokeWidth="17" strokeLinecap="round" fill="none">
+                <animate attributeName="d" dur="3.6s" repeatCount="indefinite" values={EKOR_NILAI}
+                  calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1" />
               </path>
-              <path d="M148 158 C 186 152, 190 118, 170 104" stroke={tengah} strokeWidth="11" strokeLinecap="round" fill="none">
-                <animate attributeName="d" dur="2.8s" repeatCount="indefinite"
-                  values="M148 158 C 186 152, 190 118, 170 104; M148 158 C 190 146, 196 124, 182 108; M148 158 C 186 152, 190 118, 170 104" />
+              <path d={EKOR[0]} stroke={tengah} strokeWidth="11" strokeLinecap="round" fill="none">
+                <animate attributeName="d" dur="3.6s" repeatCount="indefinite" values={EKOR_NILAI}
+                  calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1" />
+              </path>
+              <path d={EKOR[0]} stroke={terang} strokeWidth="4" strokeLinecap="round" fill="none" opacity="0.7" strokeDasharray="0 60 40 200">
+                <animate attributeName="d" dur="3.6s" repeatCount="indefinite" values={EKOR_NILAI}
+                  calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1" />
               </path>
             </g>
 
-            {/* badan */}
-            <ellipse cx="100" cy="146" rx="50" ry="40" fill={`url(#${u}-badan)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2" />
-            <ellipse cx="100" cy="154" rx="29" ry="24" fill={`url(#${u}-moncong)`} opacity="0.9" />
-            {w.totol && (
-              <g clipPath={`url(#${u}-klip-badan)`} fill={w.totol} opacity="0.8">
-                <circle cx="62" cy="130" r="8" />
-                <circle cx="132" cy="138" r="9" />
-                <circle cx="80" cy="170" r="6" />
-                <circle cx="124" cy="170" r="7" />
-                <circle cx="146" cy="112" r="5" />
-              </g>
-            )}
-            {/* bayangan kepala jatuh ke badan (ambient occlusion) */}
-            <ellipse cx="100" cy="126" rx="40" ry="10" fill={gelap} opacity="0.35" filter={`url(#${u}-lembut)`} />
+            {/* ======== BADAN (duduk, bentuk buah pir) ======== */}
+            <g className="kucing-badan">
+              <path d={BADAN_D} fill={bulu} {...kulitTepi} />
+              {/* paha belakang */}
+              <ellipse cx="66" cy="172" rx="19" ry="16" fill={bulu} opacity="0.9" />
+              <ellipse cx="134" cy="172" rx="19" ry="16" fill={bulu} opacity="0.9" />
+              <path d="M54 162 q 10 -8 22 -2 M146 162 q -10 -8 -22 -2" stroke={garis} strokeOpacity="0.25" strokeWidth="2" fill="none" strokeLinecap="round" />
+              {w.totol && (
+                <g clipPath={`url(#${u}-klip-badan)`} fill={w.totol} opacity="0.8">
+                  <circle cx="62" cy="140" r="8" />
+                  <circle cx="138" cy="146" r="9" />
+                  <circle cx="70" cy="176" r="6" />
+                  <circle cx="132" cy="178" r="7" />
+                </g>
+              )}
+              {/* bulu dada yang mengembang */}
+              <path
+                d="M80 124 q 20 -7 40 0 q 6 16 -3 30 q -5 4 -8 -1 q -3 7 -9 7 q -6 0 -9 -7 q -3 5 -8 1 q -9 -14 -3 -30 Z"
+                fill={`url(#${u}-dada)`}
+              />
+              <path d={BADAN_D} fill={`url(#${u}-ao)`} />
+              <path d={BADAN_D} fill={`url(#${u}-tepi)`} />
+            </g>
+            {/* bayangan kepala jatuh ke badan */}
+            <ellipse cx="100" cy="132" rx="38" ry="9" fill={gelap} opacity="0.4" filter={`url(#${u}-lembut)`} />
 
             {/* baju */}
             <Baju id={dipakai.baju} u={u} />
@@ -250,23 +312,28 @@ export default function Kucing({
             {/* tas di punggung */}
             <Tas id={dipakai.tas} u={u} />
 
-            {/* kaki / sepatu */}
+            {/* kaki depan / sepatu */}
             {dipakai.sepatu ? (
               <Sepatu id={dipakai.sepatu} u={u} />
             ) : (
-              <g>
-                <ellipse cx="80" cy="181" rx="16" ry="10" fill={`url(#${u}-badan)`} stroke={garis} strokeOpacity="0.4" strokeWidth="2" />
-                <ellipse cx="120" cy="181" rx="16" ry="10" fill={`url(#${u}-badan)`} stroke={garis} strokeOpacity="0.4" strokeWidth="2" />
-                <path d="M74 184 v-4 M80 185 v-5 M86 184 v-4 M114 184 v-4 M120 185 v-5 M126 184 v-4" stroke={garis} strokeOpacity="0.4" strokeWidth="1.6" strokeLinecap="round" />
+              <g className="kucing-kaki">
+                {[82, 118].map((cx) => (
+                  <g key={cx}>
+                    <ellipse cx={cx} cy="182" rx="14" ry="10" fill={`url(#${u}-kaki)`} {...kulitTepi} />
+                    <path d={`M${cx - 5} 186 v-4 M${cx} 187 v-5 M${cx + 5} 186 v-4`} stroke={garis} strokeOpacity="0.35" strokeWidth="1.6" strokeLinecap="round" />
+                    <ellipse cx={cx - 4} cy="178" rx="5" ry="2.4" fill="#fff" opacity="0.7" />
+                  </g>
+                ))}
               </g>
             )}
 
             {/* tangan kiri */}
             <g>
               {aksi === "tepuk" && (
-                <animateTransform attributeName="transform" type="rotate" values="0 60 140; -25 60 140; 0 60 140" dur="0.5s" repeatCount="indefinite" />
+                <animateTransform attributeName="transform" type="rotate" values="0 62 138; -25 62 138; 0 62 138" dur="0.5s" repeatCount="indefinite" />
               )}
-              <ellipse cx="58" cy="146" rx="14" ry="12" fill={`url(#${u}-badan)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2" />
+              <ellipse cx="60" cy="150" rx="12" ry="14" fill={bulu} {...kulitTepi} transform="rotate(18 60 150)" />
+              <ellipse cx="57" cy="158" rx="6" ry="4" fill="#fff" opacity="0.55" />
             </g>
 
             {/* tangan kanan (melambai) */}
@@ -275,123 +342,161 @@ export default function Kucing({
                 <animateTransform
                   attributeName="transform"
                   type="rotate"
-                  values={aksi === "lambai" ? "0 142 140; -34 142 140; 8 142 140; 0 142 140" : "0 142 140; 25 142 140; 0 142 140"}
-                  dur={aksi === "lambai" ? "1.1s" : "0.5s"}
+                  values={aksi === "lambai" ? "0 138 138; -38 138 138; 6 138 138; 0 138 138" : "0 138 138; 25 138 138; 0 138 138"}
+                  keyTimes={aksi === "lambai" ? "0; 0.35; 0.7; 1" : "0; 0.5; 1"}
+                  calcMode="spline"
+                  keySplines={aksi === "lambai" ? "0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1" : "0.4 0 0.2 1; 0.4 0 0.2 1"}
+                  dur={aksi === "lambai" ? "1.2s" : "0.5s"}
                   repeatCount="indefinite"
                 />
               )}
-              <ellipse cx="142" cy="146" rx="14" ry="12" fill={`url(#${u}-badan)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2" />
+              <ellipse cx="140" cy="150" rx="12" ry="14" fill={bulu} {...kulitTepi} transform="rotate(-18 140 150)" />
+              <ellipse cx="143" cy="158" rx="6" ry="4" fill="#fff" opacity="0.55" />
             </g>
 
-            {/* ======== KEPALA (bergerak sedikit mengikuti pandangan) ======== */}
+            {/* ======== KEPALA ======== */}
             <g className="kucing-kepala">
-              {/* telinga */}
-              <g className="telinga-kiri">
-                <path d="M54 64 L44 18 L90 42 Z" fill={`url(#${u}-kepala)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2.5" strokeLinejoin="round" />
-                <path d="M60 56 L54 30 L80 45 Z" fill={`url(#${u}-telinga)`} />
-              </g>
-              <g className="telinga-kanan">
-                <path d="M146 64 L156 18 L110 42 Z" fill={`url(#${u}-kepala)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2.5" strokeLinejoin="round" />
-                <path d="M140 56 L146 30 L120 45 Z" fill={`url(#${u}-telinga)`} />
-              </g>
-
-              {/* kepala */}
-              <circle cx="100" cy="88" r="50" fill={`url(#${u}-kepala)`} stroke={garis} strokeOpacity="0.45" strokeWidth="2.5" />
-              {w.totol && (
-                <g clipPath={`url(#${u}-klip-kepala)`} fill={w.totol} opacity="0.8">
-                  <circle cx="64" cy="60" r="9" />
-                  <circle cx="140" cy="70" r="7" />
-                  <circle cx="100" cy="46" r="6" />
-                  <circle cx="58" cy="116" r="5" />
-                  <circle cx="144" cy="112" r="6" />
+              <g className="kepala-ayun">
+                {/* telinga */}
+                <g className="telinga-kiri">
+                  <path d={TELINGA_KIRI_D} fill={bulu} {...kulitTepi} strokeLinejoin="round" />
+                  <path d={TELINGA_KIRI_DALAM_D} fill={`url(#${u}-telinga)`} />
+                  <path d="M61 50 q 4 -6 9 -4 M64 56 q 4 -5 9 -3" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.8" fill="none" strokeLinecap="round" />
                 </g>
-              )}
-              {/* kilap di dahi */}
-              <ellipse cx="80" cy="58" rx="20" ry="10" fill="#ffffff" opacity="0.55" transform="rotate(-20 80 58)" />
+                <g className="telinga-kanan">
+                  <path d={TELINGA_KANAN_D} fill={bulu} {...kulitTepi} strokeLinejoin="round" />
+                  <path d={TELINGA_KANAN_DALAM_D} fill={`url(#${u}-telinga)`} />
+                  <path d="M139 50 q -4 -6 -9 -4 M136 56 q -4 -5 -9 -3" stroke="#fff" strokeOpacity="0.8" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+                </g>
 
-              {/* ---- wajah (bergeser lebih jauh → kesan menoleh 3D) ---- */}
-              <g className="kucing-wajah">
-                {/* moncong */}
-                <ellipse cx="100" cy="108" rx="26" ry="18" fill={`url(#${u}-moncong)`} />
+                {/* kepala mochi dengan jumbai pipi */}
+                <path d={KEPALA_D} fill={bulu} {...kulitTepi} strokeWidth="2.4" strokeLinejoin="round" />
+                {w.totol && (
+                  <g clipPath={`url(#${u}-klip-kepala)`} fill={w.totol} opacity="0.8">
+                    <circle cx="66" cy="60" r="9" />
+                    <circle cx="138" cy="68" r="7" />
+                    <circle cx="56" cy="118" r="5" />
+                    <circle cx="146" cy="114" r="6" />
+                  </g>
+                )}
+                <path d={KEPALA_D} fill={`url(#${u}-tepi)`} />
+                {/* jambul kecil di puncak kepala */}
+                <path d="M96 40 C 94 30 102 26 106 31 C 102 30 100 34 103 39" fill={tengah} stroke={garis} strokeOpacity="0.35" strokeWidth="1.6" strokeLinejoin="round" />
+                {/* kilap di dahi */}
+                <ellipse cx="80" cy="56" rx="19" ry="9" fill="#ffffff" opacity="0.6" transform="rotate(-22 80 56)" filter={`url(#${u}-kabur)`} />
+                <ellipse cx="124" cy="50" rx="6" ry="3" fill="#ffffff" opacity="0.45" transform="rotate(18 124 50)" />
 
-                {/* pipi merona */}
-                <ellipse className="kucing-pipi" cx="64" cy="104" rx="14" ry="9" fill={`url(#${u}-pipi)`} />
-                <ellipse className="kucing-pipi" cx="136" cy="104" rx="14" ry="9" fill={`url(#${u}-pipi)`} />
+                {/* ---- wajah (bergeser lebih jauh → kesan menoleh 3D) ---- */}
+                <g className="kucing-wajah">
+                  {/* moncong */}
+                  <ellipse cx="100" cy="114" rx="27" ry="17" fill={`url(#${u}-moncong)`} />
 
-                {/* mata terbuka (dipakai saat diam/kaget/sedih; disembunyikan saat dielus/menguap) */}
-                {matanya && (
-                  <g className="mata-buka">
-                    {[80, 120].map((cx) => (
-                      <g key={cx} className="mata">
-                        <ellipse cx={cx} cy="88" rx={ekspresi === "kaget" ? 12 : 11} ry={ekspresi === "kaget" ? 15 : 13} fill={`url(#${u}-mata)`} />
-                        <g className="kucing-pupil">
-                          <ellipse cx={cx} cy="89" rx="5" ry={ekspresi === "kaget" ? 5 : 7} fill="#0b1633" opacity="0.85" />
-                          <circle cx={cx + 4} cy="83" r="4.2" fill="#fff" />
-                          <circle cx={cx - 3.5} cy="94" r="2" fill="#fff" opacity="0.85" />
-                        </g>
+                  {/* pipi merona + garis malu */}
+                  <g className="kucing-pipi">
+                    <ellipse cx="60" cy="112" rx="15" ry="9" fill={`url(#${u}-pipi)`} />
+                    <ellipse cx="140" cy="112" rx="15" ry="9" fill={`url(#${u}-pipi)`} />
+                    <path d="M55 111 l3 -4 M61 112 l3 -4 M136 112 l3 -4 M142 111 l3 -4" stroke="#ff6fa8" strokeOpacity="0.55" strokeWidth="1.6" strokeLinecap="round" />
+                  </g>
+
+                  {/* mata besar berkilau */}
+                  {mataBuka && (
+                    <g className="mata-buka">
+                      {[78, 122].map((cx) => {
+                        const kiri = cx < 100;
+                        const rx = kaget ? 12 : 13.5;
+                        const ry = kaget ? 13 : 16;
+                        return (
+                          <g key={cx} className="mata">
+                            <ellipse cx={cx} cy="92" rx={rx + 1.6} ry={ry + 1.6} fill={campur(w.mata, "#0b1633", 0.6)} />
+                            <ellipse cx={cx} cy="92" rx={rx} ry={ry} fill={`url(#${u}-iris)`} />
+                            <g className="kucing-pupil">
+                              <ellipse cx={cx} cy="93" rx={kaget ? 4 : 6.5} ry={kaget ? 4.5 : 9} fill="#0b1633" opacity="0.9" />
+                              <ellipse className="kilau-mata" cx={cx + (kiri ? 5 : 4)} cy="85" rx="5" ry="5.6" fill="#fff" />
+                              <circle cx={cx - 4.5} cy="99" r="2.3" fill="#fff" opacity="0.9" />
+                              <path d={`M${cx - 7} 103 q 7 4 14 0`} stroke="#fff" strokeOpacity="0.45" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+                            </g>
+                            {/* bulu mata lentik di sudut luar */}
+                            <path
+                              d={kiri ? `M${cx - 12} 82 q -5 -3 -7 -8 M${cx - 13} 87 q -6 -1 -9 -5` : `M${cx + 12} 82 q 5 -3 7 -8 M${cx + 13} 87 q 6 -1 9 -5`}
+                              stroke={campur(w.mata, "#0b1633", 0.6)}
+                              strokeWidth="2.4"
+                              fill="none"
+                              strokeLinecap="round"
+                            />
+                            {/* kelopak bawah tersenyum saat senang */}
+                            {senang && (
+                              <path d={`M${cx - 14} 104 q 14 -9 28 0 L ${cx + 16} 110 L ${cx - 16} 110 Z`} fill={campur(tengah, terang, 0.4)} />
+                            )}
+                          </g>
+                        );
+                      })}
+                      {sedih && (
+                        <>
+                          <path d="M64 74 q 12 -7 24 -1 M136 74 q -12 -7 -24 -1" stroke={campur(w.mata, "#0b1633", 0.4)} strokeWidth="3.5" fill="none" strokeLinecap="round" />
+                          <ellipse cx="70" cy="108" rx="3" ry="4.5" fill="#8fd3ff" opacity="0.9">
+                            <animate attributeName="cy" values="104;118;104" dur="1.6s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.9;0;0.9" dur="1.6s" repeatCount="indefinite" />
+                          </ellipse>
+                        </>
+                      )}
+                    </g>
+                  )}
+
+                  {/* mata tertawa ^ ^ (dielus, menguap, tertawa) */}
+                  <g className="mata-senang" stroke={campur(w.mata, "#0b1633", 0.5)} strokeWidth="5" fill="none" strokeLinecap="round">
+                    <path d="M66 94 q 12 -15 24 0" />
+                    <path d="M110 94 q 12 -15 24 0" />
+                  </g>
+                  {ekspresi === "tidur" && (
+                    <g stroke={campur(w.mata, "#0b1633", 0.5)} strokeWidth="4.5" fill="none" strokeLinecap="round">
+                      <path d="M67 92 q 11 9 22 0" />
+                      <path d="M111 92 q 11 9 22 0" />
+                    </g>
+                  )}
+
+                  {/* hidung */}
+                  <path d="M94 106 Q 100 102 106 106 Q 103 112 100 113 Q 97 112 94 106 Z" fill={`url(#${u}-hidung)`} />
+                  <ellipse cx="98.5" cy="106.3" rx="2.2" ry="1.2" fill="#fff" opacity="0.85" />
+
+                  {/* mulut */}
+                  <g className="mulut-biasa">
+                    {sedih ? (
+                      <path d="M90 124 q 10 -7 20 0" stroke={garis} strokeWidth="3" fill="none" strokeLinecap="round" />
+                    ) : senang ? (
+                      <g>
+                        <path d="M86 115 q 14 20 28 0 q -14 5 -28 0 Z" fill="#c2325f" stroke={garis} strokeWidth="2.4" strokeLinejoin="round" />
+                        <ellipse cx="100" cy="122" rx="7" ry="3.6" fill="#ff8fb1" />
                       </g>
-                    ))}
-                    {ekspresi === "sedih" && (
-                      <>
-                        <path d="M66 74 q 12 -6 22 -1 M134 74 q -12 -6 -22 -1" stroke={w.mata} strokeWidth="3.5" fill="none" strokeLinecap="round" />
-                        <ellipse cx="72" cy="104" rx="3" ry="4.5" fill="#8fd3ff" opacity="0.9">
-                          <animate attributeName="cy" values="100;112;100" dur="1.6s" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.9;0;0.9" dur="1.6s" repeatCount="indefinite" />
-                        </ellipse>
-                      </>
+                    ) : kaget ? (
+                      <ellipse cx="100" cy="122" rx="5.5" ry="6.5" fill="#c2325f" stroke={garis} strokeWidth="2.2" />
+                    ) : (
+                      <path d="M88 115 q 6 7 12 0 q 6 7 12 0" stroke={garis} strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                     )}
                   </g>
-                )}
-
-                {/* mata tertutup bahagia: ^ ^ (ekspresi senang, dielus, menguap) */}
-                <g className={`mata-senang ${ekspresi === "senang" ? "tampil" : ""}`} stroke={w.mata} strokeWidth="5" fill="none" strokeLinecap="round">
-                  <path d="M69 90 q 11 -14 22 0" />
-                  <path d="M109 90 q 11 -14 22 0" />
-                </g>
-                {ekspresi === "tidur" && (
-                  <g stroke={w.mata} strokeWidth="4.5" fill="none" strokeLinecap="round">
-                    <path d="M70 88 q 10 9 20 0" />
-                    <path d="M110 88 q 10 9 20 0" />
+                  {/* mulut bicara (bergerak saat Mimi berbicara) */}
+                  <g className="mulut-bicara">
+                    <ellipse cx="100" cy="120" rx="8" ry="7" fill="#c2325f" stroke={garis} strokeWidth="2.2" />
+                    <ellipse cx="100" cy="124" rx="5" ry="2.6" fill="#ff8fb1" />
                   </g>
-                )}
+                  {/* mulut menguap */}
+                  <g className="mulut-menguap">
+                    <ellipse cx="100" cy="122" rx="10" ry="12" fill="#c2325f" stroke={garis} strokeWidth="2.4" />
+                    <ellipse cx="100" cy="127" rx="6" ry="4" fill="#ff8fb1" />
+                  </g>
 
-                {/* hidung */}
-                <path d="M93 102 Q 100 98 107 102 Q 104 109 100 110 Q 96 109 93 102 Z" fill={`url(#${u}-hidung)`} />
-                <ellipse cx="98" cy="102.5" rx="2.4" ry="1.3" fill="#fff" opacity="0.8" />
+                  {/* kumis */}
+                  <g stroke={garis} strokeWidth="1.7" strokeLinecap="round" opacity="0.55" className="kumis" fill="none">
+                    <path d="M46 104 q 12 -1 22 3 M45 114 q 11 -3 22 -2 M49 123 q 9 -5 19 -6" />
+                    <path d="M154 104 q -12 -1 -22 3 M155 114 q -11 -3 -22 -2 M151 123 q -9 -5 -19 -6" />
+                  </g>
 
-                {/* mulut */}
-                <g className="mulut-biasa">
-                  {ekspresi === "sedih" ? (
-                    <path d="M88 122 q 12 -8 24 0" stroke={w.mata} strokeWidth="3.5" fill="none" strokeLinecap="round" />
-                  ) : ekspresi === "senang" ? (
-                    <g>
-                      <path d="M84 112 q 16 22 32 0 Z" fill="#c2325f" stroke={w.mata} strokeWidth="3" strokeLinejoin="round" />
-                      <ellipse cx="100" cy="120" rx="8" ry="4" fill="#ff8fb1" />
-                    </g>
-                  ) : ekspresi === "kaget" ? (
-                    <ellipse cx="100" cy="119" rx="6" ry="7" fill="#c2325f" stroke={w.mata} strokeWidth="2.5" />
-                  ) : (
-                    <path d="M100 110 q -8 10 -14 2 M100 110 q 8 10 14 2" stroke={w.mata} strokeWidth="3" fill="none" strokeLinecap="round" />
-                  )}
-                </g>
-                {/* mulut menguap (hanya tampil saat kelas .menguap aktif) */}
-                <g className="mulut-menguap">
-                  <ellipse cx="100" cy="120" rx="10" ry="12" fill="#c2325f" stroke={w.mata} strokeWidth="2.5" />
-                  <ellipse cx="100" cy="125" rx="6" ry="4" fill="#ff8fb1" />
+                  {/* kacamata */}
+                  <Kacamata id={dipakai.kacamata} u={u} />
                 </g>
 
-                {/* kumis */}
-                <g stroke={garis} strokeWidth="2" strokeLinecap="round" opacity="0.7" className="kumis">
-                  <path d="M48 98 q 12 -2 22 1 M50 110 q 10 -3 20 -3" fill="none" />
-                  <path d="M152 98 q -12 -2 -22 1 M150 110 q -10 -3 -20 -3" fill="none" />
-                </g>
-
-                {/* kacamata */}
-                <Kacamata id={dipakai.kacamata} u={u} />
+                {/* topi (ikut kepala, bukan wajah) */}
+                <Topi id={dipakai.topi} u={u} />
               </g>
-
-              {/* topi (ikut kepala, bukan wajah) */}
-              <Topi id={dipakai.topi} u={u} />
             </g>
 
             {ekspresi === "tidur" && (
@@ -415,7 +520,6 @@ export default function Kucing({
     </div>
   );
 }
-
 
 /* =====================================================================
    Aksesori — dipakai oleh Kucing dan oleh IkonBarang (pratinjau di butik).

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useGame } from "@/lib/store";
-import { sfx } from "@/lib/sound";
+import { dengarLagu, gantiLagu, infoLagu, sfx } from "@/lib/sound";
 
 /* ================================================================
    Ikon SVG buatan sendiri (tebal, bulat, ramah anak)
@@ -121,10 +121,93 @@ export function Ikon({ nama, ukuran = 24, className = "" }) {
           <path d="M16 15 c 2 3 5 4 5 7 a 5 5 0 0 1 -10 0 c 0 -2 1 -3 2 -4 c 0 2 1 3 2 3 c -1 -2 0 -4 1 -6 Z" fill="#ffd66b" />
         </svg>
       );
-    default:
-      return null;
+    default: {
+      const garis = IKON_GARIS[nama];
+      if (!garis) return null;
+      return (
+        <svg {...p} fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+          {garis}
+        </svg>
+      );
+    }
   }
 }
+
+// Ikon garis sederhana (warna mengikuti teks) untuk tombol & pilihan obrolan.
+const IKON_GARIS = {
+  "layar-penuh": <path d="M5 12 V5 h7 M20 5 h7 v7 M27 20 v7 h-7 M12 27 H5 v-7" />,
+  "layar-kecil": <path d="M12 5 v7 H5 M27 12 h-7 V5 M20 27 v-7 h7 M5 20 h7 v7" />,
+  obrolan: (
+    <>
+      <path d="M6 8 h20 a3 3 0 0 1 3 3 v9 a3 3 0 0 1 -3 3 H14 l-6 5 v-5 H6 a3 3 0 0 1 -3 -3 v-9 a3 3 0 0 1 3 -3 Z" />
+      <path d="M10 15.5 h0.1 M16 15.5 h0.1 M22 15.5 h0.1" strokeWidth="3.6" />
+    </>
+  ),
+  musik: (
+    <>
+      <path d="M12 23 V7 l14 -3 v16" />
+      <circle cx="9" cy="23" r="3.5" />
+      <circle cx="23" cy="20" r="3.5" />
+    </>
+  ),
+  lanjut: <path d="M7 7 l11 9 -11 9 Z M24 7 v18" />,
+  tutup: <path d="M8 8 l16 16 M24 8 L8 24" />,
+  hati: <path d="M16 27 C 6 20 3 14 5 9.5 C 7 5 13 5 16 10 C 19 5 25 5 27 9.5 C 29 14 26 20 16 27 Z" />,
+  tanya: (
+    <>
+      <path d="M11 11 a5 5 0 1 1 7 4.6 c-1.4 .6 -2 1.6 -2 3 V20" />
+      <path d="M16 25.5 h0.1" strokeWidth="3.6" />
+    </>
+  ),
+  buku: (
+    <>
+      <path d="M16 8 C 12 5 7 5 4 6 V25 C 7 24 12 24 16 27 C 20 24 25 24 28 25 V6 C 25 5 20 5 16 8 Z" />
+      <path d="M16 8 V27" />
+    </>
+  ),
+  pensil: (
+    <>
+      <path d="M21 5 l6 6 L12 26 H6 v-6 Z" />
+      <path d="M18 8 l6 6" />
+    </>
+  ),
+  senyum: (
+    <>
+      <circle cx="16" cy="16" r="12" />
+      <path d="M11 18.5 q5 5 10 0 M12 12.5 h0.1 M20 12.5 h0.1" />
+    </>
+  ),
+  datar: (
+    <>
+      <circle cx="16" cy="16" r="12" />
+      <path d="M11.5 20 h9 M12 12.5 h0.1 M20 12.5 h0.1" />
+    </>
+  ),
+  sedih: (
+    <>
+      <circle cx="16" cy="16" r="12" />
+      <path d="M11 21.5 q5 -5 10 0 M12 12.5 h0.1 M20 12.5 h0.1" />
+    </>
+  ),
+  kantuk: (
+    <>
+      <circle cx="16" cy="16" r="12" />
+      <path d="M10.5 13.5 q2 1.6 4 0 M17.5 13.5 q2 1.6 4 0 M13.5 20.5 h5" />
+    </>
+  ),
+  jam: (
+    <>
+      <circle cx="16" cy="16" r="12" />
+      <path d="M16 9 v7 l5 3" />
+    </>
+  ),
+  lambai: (
+    <>
+      <path d="M10 17 V9 a2 2 0 0 1 4 0 v6 M14 15 V7 a2 2 0 0 1 4 0 v8 M18 15 V8.5 a2 2 0 0 1 4 0 V18 c0 5 -3 9 -8 9 c-4 0 -6 -2 -8 -6 l-2 -4 a2 2 0 0 1 3.4 -2 L10 17" />
+      <path d="M25 5 q2 2 2 5 M5 6 q-1.5 2 -1 4.5" />
+    </>
+  ),
+};
 
 /* ================================================================
    Percikan kilau di titik ketukan (dipakai tombol)
@@ -308,6 +391,8 @@ export function BarAtas({ judul, kembali = "/" }) {
         <div className="flex shrink-0 items-center gap-2">
           <PilKoin ikon="ikan" nilai={state.ikan} />
           <PilKoin ikon="permata" nilai={state.permata} className="hidden sm:inline-flex" />
+          {/* di ponsel judul butuh tempat; layar penuh tetap bisa dinyalakan dari beranda */}
+          <TombolLayarPenuh className="!hidden sm:!grid" />
         </div>
       </div>
     </div>
@@ -629,6 +714,91 @@ export function KelompokBenda({ kelompok, isi, emoji = "🐟" }) {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+/* ================================================================
+   Layar penuh — tombol bulat di bar atas. Disembunyikan bila browser
+   tidak mendukung (misal Safari di iPhone).
+   ================================================================ */
+function langgananLayarPenuh(cb) {
+  document.addEventListener("fullscreenchange", cb);
+  document.addEventListener("webkitfullscreenchange", cb);
+  return () => {
+    document.removeEventListener("fullscreenchange", cb);
+    document.removeEventListener("webkitfullscreenchange", cb);
+  };
+}
+const sedangLayarPenuh = () => Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+const dukungLayarPenuh = () => {
+  const el = document.documentElement;
+  return Boolean(el.requestFullscreen || el.webkitRequestFullscreen);
+};
+const langgananKosong = () => () => {};
+
+export function TombolLayarPenuh({ className = "" }) {
+  const penuh = useSyncExternalStore(langgananLayarPenuh, sedangLayarPenuh, () => false);
+  const didukung = useSyncExternalStore(langgananKosong, dukungLayarPenuh, () => false);
+  if (!didukung) return null;
+
+  const ubah = async () => {
+    try {
+      if (sedangLayarPenuh()) {
+        await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      } else {
+        const el = document.documentElement;
+        await (el.requestFullscreen || el.webkitRequestFullscreen).call(el, { navigationUI: "hide" });
+        // tablet: kunci ke posisi yang sedang dipakai supaya tidak berputar saat dipegang anak
+        screen.orientation?.lock?.(screen.orientation.type).catch(() => {});
+      }
+    } catch {
+      /* ditolak browser, abaikan */
+    }
+  };
+
+  return (
+    <Tombol
+      warna="#ffffff"
+      bayangan="#c9dcf5"
+      className={`!text-tinta grid h-11 w-11 shrink-0 place-items-center !rounded-full ${className}`}
+      onClick={ubah}
+      aria-label={penuh ? "Keluar dari layar penuh" : "Layar penuh"}
+      aria-pressed={penuh}
+    >
+      <Ikon nama={penuh ? "layar-kecil" : "layar-penuh"} ukuran={22} />
+    </Tombol>
+  );
+}
+
+/* ================================================================
+   Pemutar musik mini: judul lagu yang sedang diputar + tombol ganti lagu
+   ================================================================ */
+export function PemutarMusik({ className = "" }) {
+  const { state, nyalakanAudio } = useGame();
+  const info = useSyncExternalStore(dengarLagu, infoLagu, () => null);
+  if (!state.setelan.musik) return null;
+
+  return (
+    <div className={`kaca inline-flex items-center gap-2 rounded-full py-1 pl-3 pr-1 ${className}`}>
+      <span className={`grid h-7 w-7 place-items-center rounded-full bg-laut text-white ${info ? "anim-denyut" : ""}`} aria-hidden="true">
+        <Ikon nama="musik" ukuran={16} />
+      </span>
+      <span key={info?.nama || "kosong"} className="anim-pop max-w-[9.5rem] truncate text-sm font-semibold text-tinta">
+        {info ? info.nama : "Ketuk untuk musik"}
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          nyalakanAudio();
+          sfx("pilih");
+          gantiLagu();
+        }}
+        className="grid h-8 w-8 place-items-center rounded-full bg-white text-laut-tua shadow-sm transition-transform active:scale-90"
+        aria-label="Lagu berikutnya"
+      >
+        <Ikon nama="lanjut" ukuran={16} />
+      </button>
     </div>
   );
 }
