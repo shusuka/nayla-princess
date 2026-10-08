@@ -42,6 +42,18 @@ const MENU = [
   { href: "/hadiah", label: "Hadiah", sub: "Butik Mimi", emoji: "🎁", warna: "#ff7eb6", bayangan: "#d44d8c", emas: true },
 ];
 
+/** Ukuran Mimi mengikuti tinggi layar supaya beranda muat satu layar tanpa digulir. */
+function useUkuranMimi() {
+  const [ukuran, setUkuran] = useState(200);
+  useEffect(() => {
+    const hitung = () => setUkuran(Math.round(Math.min(230, Math.max(110, (window.innerHeight - 500) * 0.8))));
+    hitung();
+    window.addEventListener("resize", hitung);
+    return () => window.removeEventListener("resize", hitung);
+  }, []);
+  return ukuran;
+}
+
 function Setelan({ nilai, onUbah, label, ikon }) {
   return (
     <button
@@ -74,6 +86,7 @@ export default function Beranda() {
   const [ngobrol, setNgobrol] = useState(false);
   const [suasana, setSuasana] = useState("senang");
   const bicaraMimi = useMimiBicara();
+  const ukuranMimi = useUkuranMimi();
 
   // Nama kosong = anak baru pertama kali membuka aplikasi.
   const tanyaNama = siap && !state.namaAnak;
@@ -98,7 +111,7 @@ export default function Beranda() {
   const streak = state.stats.streak;
 
   return (
-    <main className="relative flex min-h-dvh flex-col items-center px-4 pb-44 pt-3">
+    <main className="relative flex h-dvh flex-col items-center overflow-hidden px-4 pb-[max(4.5rem,10vh)] pt-3">
       <Latar />
 
       {/* baris atas: pil kaca mengambang */}
@@ -128,23 +141,25 @@ export default function Beranda() {
         </div>
       </div>
 
-      {/* judul */}
-      <h1 className="anim-muncul mt-5 text-center text-5xl font-extrabold leading-[0.9] tracking-tight sm:text-7xl" style={{ animationDelay: ".08s" }}>
-        <span className="judul-tebal block">CatMath</span>
-        <span className="teks-emas block">Adventure</span>
+      {/* judul satu baris */}
+      <h1
+        className="anim-muncul mt-3 whitespace-nowrap text-center text-[clamp(1.9rem,8.2vw,4.6rem)] font-extrabold leading-none tracking-tight"
+        style={{ animationDelay: ".08s" }}
+      >
+        <span className="judul-tebal">CatMath</span> <span className="teks-emas">Adventure</span>
       </h1>
-      <p className="kaca anim-muncul mt-3 rounded-full px-4 py-1.5 text-sm font-semibold text-tinta sm:text-base" style={{ animationDelay: ".16s" }}>
-        Perkalian &amp; Pembagian 1–10
-      </p>
-      <PemutarMusik className="anim-muncul mt-2" />
+      <div className="anim-muncul mt-2 flex flex-wrap items-center justify-center gap-2" style={{ animationDelay: ".16s" }}>
+        <p className="kaca rounded-full px-4 py-1.5 text-sm font-semibold text-tinta sm:text-base">Perkalian &amp; Pembagian 1–10</p>
+        <PemutarMusik />
+      </div>
 
       {/* Mimi di atas panggung */}
-      <section className="relative mt-3 flex flex-col items-center" aria-label="Mimi">
+      <section className="relative mt-1 flex min-h-0 flex-1 flex-col items-center justify-center" aria-label="Mimi">
         <div className={`transition-opacity duration-300 ${ngobrol ? "opacity-0" : "opacity-100"}`}>
           <Gelembung className="mb-2">{sapaan}</Gelembung>
         </div>
         <div className="relative grid place-items-center">
-          <SinarPutar ukuran={360} warna="rgba(255,255,255,.55)" />
+          <SinarPutar ukuran={Math.round(ukuranMimi * 1.55)} warna="rgba(255,255,255,.55)" />
           {/* kilau yang mengorbit */}
           {[0, 1, 2].map((i) => (
             <span
@@ -152,7 +167,7 @@ export default function Beranda() {
               className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0"
               style={{ animation: `sinar-putar ${7 + i * 2}s linear ${-i * 2}s infinite` }}
             >
-              <span className="absolute block" style={{ transform: `translate(${110 + i * 14}px, -10px)` }}>
+              <span className="absolute block" style={{ transform: `translate(${Math.round(ukuranMimi * 0.48) + i * 14}px, -10px)` }}>
                 <span className="anim-kilau block text-xl">✨</span>
               </span>
             </span>
@@ -164,7 +179,7 @@ export default function Beranda() {
               ekspresi={ngobrol ? suasana : "senang"}
               aksi={aksi}
               bicara={bicaraMimi}
-              ukuran={230}
+              ukuran={ukuranMimi}
             />
           </button>
           {/* ajak Mimi mengobrol */}
@@ -185,7 +200,7 @@ export default function Beranda() {
             <span className="kaca rounded-full px-2.5 py-0.5 text-xs font-bold text-tinta">Ngobrol</span>
           </button>
           {/* panggung */}
-          <div className="relative -mt-9 h-12 w-64 rounded-[50%] bingkai-emas !rounded-[50%]">
+          <div className="relative -mt-9 h-12 rounded-[50%] bingkai-emas !rounded-[50%]" style={{ width: Math.round(ukuranMimi * 1.1) }}>
             <div
               className="polkadot h-full w-full rounded-[50%]"
               style={{ backgroundColor: "#ff9cc8", "--dot": "rgba(255,255,255,.45)", boxShadow: "inset 0 -8px 14px rgba(0,0,0,.12), inset 0 4px 0 rgba(255,255,255,.5)" }}
@@ -194,24 +209,24 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* menu utama: bento asimetris */}
-      <nav className="mt-7 grid w-full max-w-lg grid-cols-2 grid-rows-2 gap-4" aria-label="Menu utama">
+      {/* menu utama: tiga kartu sejajar, sama besar */}
+      <nav className="mt-3 grid w-full max-w-2xl grid-cols-3 gap-3 sm:gap-4" aria-label="Menu utama">
         {MENU.map((m, i) => (
-          <div key={m.href} className={`anim-muncul ${m.besar ? "row-span-2" : ""}`} style={{ animationDelay: `${0.2 + i * 0.1}s` }}>
-            <KartuMiring kuat={12}>
+          <div key={m.href} className="anim-muncul" style={{ animationDelay: `${0.2 + i * 0.1}s` }}>
+            <KartuMiring kuat={12} className="h-full">
               <Tombol
                 href={m.href}
                 warna={m.warna}
                 bayangan={m.bayangan}
-                className={`polkadot flex h-full w-full flex-col items-center justify-center gap-1 px-3 ${m.besar ? "min-h-[15rem] py-6 text-3xl" : "min-h-[7rem] py-4 text-2xl"}`}
+                className="polkadot flex h-full min-h-[clamp(6.5rem,15vh,9rem)] w-full flex-col items-center justify-center gap-0.5 px-2 py-3 text-xl sm:text-2xl"
                 style={{ "--dot": "rgba(255,255,255,.16)" }}
               >
                 {m.emas && <span className="foil" />}
-                <span className={`anim-melayang inline-block drop-shadow-[0_8px_10px_rgba(0,0,0,.2)] ${m.besar ? "text-7xl" : "text-5xl"}`} style={{ animationDelay: `${-i}s` }}>
+                <span className="anim-melayang inline-block text-4xl drop-shadow-[0_8px_10px_rgba(0,0,0,.2)] sm:text-5xl" style={{ animationDelay: `${-i}s` }}>
                   {m.emoji}
                 </span>
                 <span>{m.label}</span>
-                <span className="text-sm font-semibold opacity-85">{m.sub}</span>
+                <span className="text-xs font-semibold opacity-85 sm:text-sm">{m.sub}</span>
               </Tombol>
             </KartuMiring>
           </div>
@@ -221,7 +236,7 @@ export default function Beranda() {
       <Link
         href="/ortu"
         onClick={() => sfx("tap")}
-        className="kaca anim-muncul mt-6 rounded-full px-5 py-2 text-sm font-semibold text-tinta-lembut transition-transform hover:scale-105"
+        className="kaca anim-muncul mt-3 rounded-full px-5 py-1.5 text-sm font-semibold text-tinta-lembut transition-transform hover:scale-105"
         style={{ animationDelay: ".55s" }}
       >
         👨‍👩‍👧 Ruang Orang Tua
@@ -284,6 +299,36 @@ export default function Beranda() {
               }}
             />
           ))}
+          {state.setelan.mimi && (
+            <div className="flex items-center justify-between gap-2 rounded-[22px] bg-awan px-4 py-3 text-lg font-semibold text-tinta">
+              <span>Jenis suara</span>
+              <span className="flex rounded-full bg-white p-1" role="radiogroup" aria-label="Jenis suara Mimi">
+                {[
+                  { lama: false, label: "Baru" },
+                  { lama: true, label: "Lama" },
+                ].map((o) => {
+                  const aktif = !!state.setelan.suaraLama === o.lama;
+                  return (
+                    <button
+                      key={o.label}
+                      type="button"
+                      role="radio"
+                      aria-checked={aktif}
+                      onClick={() => {
+                        nyalakanAudio();
+                        ubahSetelan({ suaraLama: o.lama });
+                        sfx("pilih");
+                        setTimeout(() => bicara("Meong! Halo, aku Mimi!"), 150);
+                      }}
+                      className={`rounded-full px-4 py-1 text-base transition-colors ${aktif ? "bg-laut text-white" : "text-tinta-lembut"}`}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </span>
+            </div>
+          )}
           <div className="flex items-center justify-between rounded-[22px] bg-awan px-4 py-3 text-lg font-semibold text-tinta">
             <span>Lagu</span>
             <PemutarMusik />

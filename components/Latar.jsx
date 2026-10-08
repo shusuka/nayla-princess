@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Burung, KupuKupu } from "@/components/Hewan";
+import { Burung, KucingJalan, KupuKupu } from "@/components/Hewan";
 import { sfx } from "@/lib/sound";
 
 // Latar langit berlapis (parallax): gumpalan warna, matahari bermuka, pelangi, awan 3D,
@@ -32,6 +32,14 @@ const BURUNG = [
 const KUPU = [
   { kiri: "6%", atas: "58%", durasi: 18, tunda: 0, warna: "#ff8fc0" },
   { kiri: "56%", atas: "64%", durasi: 22, tunda: -7, warna: "#a98bff" },
+];
+
+// arah -1 = berjalan dari kanan ke kiri (animasi dibalik, gambar dicerminkan)
+const KUCING_JALAN = [
+  { warna: "#ffffff", ukuran: 74, durasi: 34, tunda: -4, arah: 1, tempo: 0.42, bawah: "1.2vh" },
+  { warna: "#ffb27a", belang: "#e0803a", ukuran: 62, durasi: 42, tunda: -22, arah: -1, tempo: 0.48, bawah: "3.4vh" },
+  { warna: "#b9c4d6", belang: "#7d8aa3", ukuran: 56, durasi: 50, tunda: -36, arah: 1, tempo: 0.52, bawah: "4.6vh" },
+  { warna: "#3a3f55", ukuran: 66, durasi: 38, tunda: -12, arah: -1, tempo: 0.45, bawah: "0.6vh" },
 ];
 
 const BINTANG = [
@@ -162,6 +170,14 @@ export default function Latar({ rumput = true }) {
         setTimeout(() => balon.classList.remove("meletus"), 2400);
         return;
       }
+      const kucing = kena("[data-kucing-jalan]");
+      if (kucing) {
+        sfx("meong");
+        kucing.classList.remove("anim-lompat");
+        void kucing.offsetWidth;
+        kucing.classList.add("anim-lompat");
+        return;
+      }
       const burung = kena("[data-burung]");
       if (burung) {
         sfx("kicau");
@@ -201,13 +217,20 @@ export default function Latar({ rumput = true }) {
         </svg>
       ))}
 
-      {/* pelangi samar */}
-      <svg className="absolute -left-20 top-[18%] w-[70vw] max-w-[640px] opacity-35" viewBox="0 0 400 200" aria-hidden="true"
-        style={{ transform: "translate(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -8px))" }}>
-        {["#ff8fc0", "#ffb27a", "#ffd66b", "#5fd6a4", "#6ec6ff", "#a98bff"].map((c, i) => (
-          <path key={c} d={`M ${20 + i * 12} 200 A ${180 - i * 12} ${180 - i * 12} 0 0 1 ${380 - i * 12} 200`} stroke={c} strokeWidth="12" fill="none" />
-        ))}
-      </svg>
+      {/* pelangi besar di tengah, kakinya tenggelam di balik bukit */}
+      <div className="absolute left-1/2 top-[14%] w-[118vw] max-w-[1180px] -translate-x-1/2">
+        <svg className="w-full opacity-40" viewBox="0 0 400 200" aria-hidden="true"
+          style={{
+            transform: "translate(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -8px))",
+            // kaki pelangi memudar, supaya di halaman tanpa bukit tidak terpotong tajam
+            maskImage: "linear-gradient(to bottom, #000 72%, transparent)",
+            WebkitMaskImage: "linear-gradient(to bottom, #000 72%, transparent)",
+          }}>
+          {["#ff8fc0", "#ffb27a", "#ffd66b", "#5fd6a4", "#6ec6ff", "#a98bff"].map((c, i) => (
+            <path key={c} d={`M ${20 + i * 12} 200 A ${180 - i * 12} ${180 - i * 12} 0 0 1 ${380 - i * 12} 200`} stroke={c} strokeWidth="12" fill="none" />
+          ))}
+        </svg>
+      </div>
 
       <Matahari />
 
@@ -264,9 +287,24 @@ export default function Latar({ rumput = true }) {
             <path d="M0 175 Q 260 100 560 165 T 1200 170 L 1200 240 L 0 240 Z" fill="url(#bukit2)" />
             <path d="M120 150 Q 260 110 420 140" stroke="#fff" strokeWidth="6" opacity="0.35" fill="none" strokeLinecap="round" />
           </svg>
-          {/* bunga & rumput bergoyang */}
+          {/* kucing yang berlalu-lalang di tanah */}
+          {KUCING_JALAN.map((k, i) => (
+            <div
+              key={`kj-${i}`}
+              className="absolute left-0"
+              style={{
+                bottom: k.bawah,
+                animation: `kucing-lewat ${k.durasi}s linear ${k.tunda}s infinite ${k.arah < 0 ? "reverse" : "normal"}`,
+              }}
+            >
+              <div data-kucing-jalan>
+                <KucingJalan warna={k.warna} belang={k.belang} ukuran={k.ukuran} arah={k.arah} tempo={k.tempo} />
+              </div>
+            </div>
+          ))}
+          {/* bunga & rumput bergoyang (di depan kucing) */}
           <div className="absolute inset-x-0 bottom-0 flex justify-around">
-            {Array.from({ length: 24 }, (_, i) => (
+            {Array.from({ length: 34 }, (_, i) => (
               <div
                 key={`rumput-${i}`}
                 style={{

@@ -360,7 +360,7 @@ export default function Hadiah() {
                 <span className="foil" />
                 <p className="relative text-xs font-bold uppercase tracking-[0.25em] opacity-90">Koleksi terbatas</p>
                 <h2 className="relative mt-1 text-3xl font-extrabold leading-none drop-shadow-[0_3px_0_rgba(176,48,109,.6)]">Koleksi Polkadot</h2>
-                <p className="relative mt-2 max-w-[34ch] text-sm font-semibold opacity-95">
+                <p className="relative mt-2 text-sm font-semibold opacity-95">
                   Pita, tiara, gaun, tas, sampai sepatu bertotol. Ada juga Dotty, kucing yang bulunya polkadot!
                 </p>
               </div>

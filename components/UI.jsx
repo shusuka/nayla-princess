@@ -784,7 +784,7 @@ export function PemutarMusik({ className = "" }) {
       <span className={`grid h-7 w-7 place-items-center rounded-full bg-laut text-white ${info ? "anim-denyut" : ""}`} aria-hidden="true">
         <Ikon nama="musik" ukuran={16} />
       </span>
-      <span key={info?.nama || "kosong"} className="anim-pop max-w-[9.5rem] truncate text-sm font-semibold text-tinta">
+      <span key={info?.nama || "kosong"} className="anim-pop whitespace-nowrap text-sm font-semibold text-tinta">
         {info ? info.nama : "Ketuk untuk musik"}
       </span>
       <button

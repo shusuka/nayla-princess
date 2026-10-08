@@ -36,6 +36,8 @@ Prinsip yang dipakai:
   tebak-tebakan (jawaban benar dapat +1 ikan), cerita fakta kucing, hobi, ajakan belajar/bermain.
 - **Layar penuh**: tombol di bar atas (disembunyikan otomatis bila browser tidak mendukung, misal iPhone).
 - Hewan lain (ikan, tikus, burung, kupu-kupu) ada di `components/Hewan.jsx`.
+- Beranda muat satu layar tanpa digulir: judul satu baris, tiga kartu menu sejajar, ukuran Mimi menyesuaikan tinggi layar.
+  Pelangi besar di tengah, dan **kucing-kucing kecil berlalu-lalang di rumput** (`KucingJalan`), bisa diketuk untuk mengeong.
 - Latar berlapis dengan parallax; **balon bisa diketuk sampai meletus** dan burung berkicau saat diketuk.
 - Efek suara dibuat dengan Web Audio: marimba, glockenspiel, meong anak kucing, dengkur, cicit mainan,
   gelembung, fanfare.
@@ -63,7 +65,22 @@ Buka http://localhost:3000.
 
 ## Suara Mimi
 
-Suara Mimi adalah **suara anak perempuan**: klip **ElevenLabs** (suara bawaan *Jessica*, model
+Ada dua jenis suara, dipilih di **Pengaturan → Jenis suara** (tersimpan per perangkat):
+
+- **Baru (bawaan)**: suara neural Microsoft `id-ID-GadisNeural` lewat
+  [edge-tts](https://github.com/rany2/edge-tts) (gratis, tanpa API key), nada dinaikkan oleh mesin TTS-nya
+  sendiri sehingga tidak terdengar seperti robot. Setiap fakta perkalian & pembagian 1–10 direkam sebagai
+  **kalimat utuh** (`hitung-kali-3-4.mp3`, `hitung-bagi-12-3.mp3`), jadi intonasinya alami. File di `public/suara/`.
+
+  ```bash
+  pip install edge-tts
+  npm run suara:edge             # buat klip yang belum ada
+  npm run suara:edge -- --ulang  # buat ulang semua
+  ```
+
+- **Lama**: klip ElevenLabs di `public/suara-lama/` (penjelasan di bawah).
+
+Suara lama adalah **suara anak perempuan**: klip **ElevenLabs** (suara bawaan *Jessica*, model
 `eleven_flash_v2_5` dengan `language_code: "id"`) yang lalu diolah ffmpeg (`rubberband`:
 nada + formant dinaikkan ×1,24, tempo tetap) dan disimpan sebagai file statis di `public/suara/`.
 

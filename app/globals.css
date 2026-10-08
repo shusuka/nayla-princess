@@ -145,6 +145,10 @@ button {
   from { transform: translateX(-30vw); }
   to { transform: translateX(130vw); }
 }
+@keyframes kucing-lewat {
+  from { transform: translateX(-140px); }
+  to { transform: translateX(calc(100vw + 40px)); }
+}
 @keyframes lari-tikus {
   from { transform: translateX(-22%); }
   to { transform: translateX(104%); }

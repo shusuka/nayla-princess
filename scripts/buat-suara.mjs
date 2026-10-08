@@ -7,7 +7,7 @@
  *
  * Alur: ElevenLabs -> .suara-mentah/*.mp3 (mentah, tidak di-commit)
  *       -> ffmpeg menaikkan nada + formant supaya terdengar seperti anak perempuan
- *       -> public/suara/*.mp3 (di-commit, dipakai aplikasi sebagai file statis).
+ *       -> public/suara-lama/*.mp3 (di-commit, dipakai bila setelan "Jenis suara: Lama").
  * Jadi aplikasi tidak pernah memanggil API saat dipakai anak.
  *
  * Catatan akun tier gratis: hanya suara *premade* yang boleh dipakai lewat API
@@ -21,7 +21,8 @@ import { fileURLToPath } from "node:url";
 import { daftarKlip } from "../lib/suara-daftar.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const TUJUAN = path.join(ROOT, "public", "suara");
+// Klip ElevenLabs sekarang jadi pilihan "suara lama"; suara bawaan dibuat oleh buat-suara-edge.mjs.
+const TUJUAN = path.join(ROOT, "public", "suara-lama");
 const MENTAH = path.join(ROOT, ".suara-mentah");
 
 function bacaEnv(nama) {

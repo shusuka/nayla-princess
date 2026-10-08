@@ -74,6 +74,82 @@ export function Ikan({ warna = "#ff9b54", ukuran = 90, senang = false, arah = 1 
 }
 
 /** Tikus kecil 3D yang lari (kaki bergerak). */
+/**
+ * Kucing kecil tampak samping yang sedang berjalan (kaki melangkah bergantian, ekor melambai,
+ * kepala sedikit mengangguk). Menghadap ke kanan; balik arah dengan `arah={-1}`.
+ * `tempo` = lama satu langkah (detik), `belang` = warna loreng (opsional).
+ */
+export function KucingJalan({ warna = "#ffffff", belang, ukuran = 70, arah = 1, tempo = 0.5 }) {
+  const u = useU("kj");
+  const terang = campur(warna, "#ffffff", 0.55);
+  const gelap = campur(warna, "#1b3a6b", 0.28);
+  const garis = campur(warna, "#1b3a6b", 0.5);
+  const kaki = (x, fase, depan) => (
+    <g>
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        values={`-22 ${x} 52;22 ${x} 52;-22 ${x} 52`}
+        dur={`${tempo * 2}s`}
+        begin={`${-fase * tempo}s`}
+        repeatCount="indefinite"
+      />
+      <rect x={x - 4.5} y="50" width="9" height="20" rx="4.5" fill={depan ? `url(#${u}-b)` : gelap} stroke={garis} strokeWidth="1.6" />
+      <ellipse cx={x} cy="69" rx="6" ry="3.6" fill={depan ? terang : gelap} stroke={garis} strokeWidth="1.4" />
+    </g>
+  );
+  return (
+    <svg viewBox="0 0 120 80" width={ukuran} height={ukuran * (80 / 120)} aria-hidden="true" style={{ transform: `scaleX(${arah})`, overflow: "visible" }}>
+      <defs>
+        <radialGradient id={`${u}-b`} cx="45%" cy="30%" r="80%">
+          <stop offset="0%" stopColor={terang} />
+          <stop offset="70%" stopColor={warna} />
+          <stop offset="100%" stopColor={gelap} />
+        </radialGradient>
+      </defs>
+      {/* bayangan */}
+      <ellipse cx="58" cy="74" rx="38" ry="4" fill="#1b3a6b" opacity="0.14" />
+      {/* kaki belakang (di balik badan) */}
+      {kaki(36, 1, false)}
+      {kaki(76, 0, false)}
+      {/* ekor */}
+      <path d="M24 40 C 8 36, 4 20, 12 10" stroke={garis} strokeWidth="11" fill="none" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" values="-10 24 40;12 24 40;-10 24 40" dur={`${tempo * 4}s`} repeatCount="indefinite" />
+      </path>
+      <path d="M24 40 C 8 36, 4 20, 12 10" stroke={`url(#${u}-b)`} strokeWidth="8" fill="none" strokeLinecap="round">
+        <animateTransform attributeName="transform" type="rotate" values="-10 24 40;12 24 40;-10 24 40" dur={`${tempo * 4}s`} repeatCount="indefinite" />
+      </path>
+      {/* badan, sedikit naik-turun mengikuti langkah */}
+      <g>
+        <animateTransform attributeName="transform" type="translate" values="0 0;0 -1.6;0 0" dur={`${tempo}s`} repeatCount="indefinite" />
+        <ellipse cx="56" cy="44" rx="34" ry="17" fill={`url(#${u}-b)`} stroke={garis} strokeWidth="1.8" />
+        {belang && (
+          <g stroke={belang} strokeWidth="4" strokeLinecap="round" opacity="0.8">
+            <path d="M44 29 q 2 7 0 12 M54 28 q 2 8 0 13 M64 29 q 2 7 0 12" />
+          </g>
+        )}
+        <ellipse cx="52" cy="34" rx="18" ry="5" fill="#fff" opacity="0.4" />
+        {/* kepala */}
+        <g>
+          <animateTransform attributeName="transform" type="rotate" values="-3 88 36;3 88 36;-3 88 36" dur={`${tempo * 2}s`} repeatCount="indefinite" />
+          <path d="M80 22 L 83 6 L 93 17 Z" fill={`url(#${u}-b)`} stroke={garis} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M96 20 L 104 7 L 107 22 Z" fill={`url(#${u}-b)`} stroke={garis} strokeWidth="1.8" strokeLinejoin="round" />
+          <path d="M84 16 L 85 10 L 89 15 Z M100 17 L 103 12 L 104 19 Z" fill="#ff9cc8" />
+          <circle cx="94" cy="32" r="17" fill={`url(#${u}-b)`} stroke={garis} strokeWidth="1.8" />
+          {belang && <path d="M90 17 q 2 4 0 7 M96 16 q 1 4 -1 7" stroke={belang} strokeWidth="3" strokeLinecap="round" opacity="0.8" />}
+          <Mata cx={101} cy={30} r={3.6} />
+          <ellipse cx="103" cy="38" rx="4" ry="2.6" fill="#ff7eb6" opacity="0.55" />
+          <path d="M108 33 l 2.2 1.6 l -2.2 1.4 z" fill="#ff7eb6" />
+          <path d="M104 37 q 2 2 4 0" stroke={garis} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        </g>
+      </g>
+      {/* kaki depan */}
+      {kaki(40, 0, true)}
+      {kaki(80, 1, true)}
+    </svg>
+  );
+}
+
 export function Tikus({ ukuran = 80, senang = false }) {
   const u = useU("t");
   return (

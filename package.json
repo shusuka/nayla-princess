@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "suara": "node scripts/buat-suara.mjs"
+    "suara": "node scripts/buat-suara.mjs",
+    "suara:edge": "node scripts/buat-suara-edge.mjs"
   },
   "dependencies": {
     "motion": "^13.4.5",
