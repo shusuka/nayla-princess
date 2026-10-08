@@ -91,6 +91,17 @@ Ada dua jenis suara, dipilih di **Pengaturan → Jenis suara** (tersimpan per pe
 
 - **Lama**: klip ElevenLabs di `public/suara-lama/` (penjelasan di bawah).
 
+  Rekam ulang ElevenLabs dengan jernih (model `eleven_multilingual_v2`, tanpa olah nada, 96 kbps):
+
+  ```bash
+  npm run suara -- --contoh            # 1 kalimat per suara perempuan premade -> .suara-contoh/ untuk dibandingkan
+  npm run suara -- --ulang             # rekam ulang semua klip dengan ELEVENLABS_VOICE_ID pilihan (±3.000 huruf)
+  npm run suara -- --ulang --hitung    # + 200 kalimat utuh fakta perkalian/pembagian (±8.600 huruf lagi)
+  ```
+
+  Kuota gratis 10.000 kredit/bulan; multilingual v2 = 1 kredit per huruf. Untuk `--hitung` sekaligus,
+  pakai `ELEVENLABS_MODEL=eleven_flash_v2_5` (0,5 kredit per huruf) atau rekam di bulan berikutnya.
+
 Suara lama adalah **suara anak perempuan**: klip **ElevenLabs** (suara bawaan *Jessica*, model
 `eleven_flash_v2_5` dengan `language_code: "id"`) yang lalu diolah ffmpeg (`rubberband`:
 nada + formant dinaikkan ×1,24, tempo tetap) dan disimpan sebagai file statis di `public/suara/`.

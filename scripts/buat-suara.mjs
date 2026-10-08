@@ -18,7 +18,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { daftarKlip } from "../lib/suara-daftar.js";
+import { daftarKlip, klipHitung } from "../lib/suara-daftar.js";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Klip ElevenLabs sekarang jadi pilihan "suara lama"; suara bawaan dibuat oleh buat-suara-edge.mjs.
@@ -37,24 +37,27 @@ function bacaEnv(nama) {
 }
 
 const SUARA = bacaEnv("ELEVENLABS_VOICE_ID") || "cgSgspJ2msm6clMCkdW9"; // Jessica (premade, "cute")
-// flash v2.5 + language_code "id" membuat pelafalan mengikuti bahasa Indonesia.
-const MODEL = "eleven_flash_v2_5";
+// multilingual v2 terdengar paling natural untuk bahasa Indonesia (1 kredit/huruf);
+// flash v2.5 lebih hemat (0,5 kredit/huruf) tapi lebih datar. Ganti lewat ELEVENLABS_MODEL.
+const MODEL = bacaEnv("ELEVENLABS_MODEL") || "eleven_multilingual_v2";
 const BAHASA = "id";
-// Faktor nada: 1.24 ≈ naik 3,7 semitone. Formant ikut naik sehingga warna suaranya
-// seperti anak kecil, tetapi tempo dijaga tetap (rubberband) supaya tidak jadi "chipmunk".
-const NADA = Number(bacaEnv("ANAK_NADA") || 1.24);
+// Faktor nada. Bawaan 1 = suara asli tanpa diolah (paling jernih). Menaikkan nada
+// (misal 1.24 seperti versi pertama) membuat suara lebih "anak" tetapi terdengar seperti robot.
+const NADA = Number(bacaEnv("ANAK_NADA") || 1);
 
-async function buat(kunci, teks, tujuan) {
+async function buat(kunci, teks, tujuan, suara = SUARA) {
   const res = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${SUARA}?output_format=mp3_44100_128`,
+    `https://api.elevenlabs.io/v1/text-to-speech/${suara}?output_format=mp3_44100_128`,
     {
       method: "POST",
       headers: { "xi-api-key": kunci, "Content-Type": "application/json" },
       body: JSON.stringify({
         text: teks,
         model_id: MODEL,
-        language_code: BAHASA,
-        voice_settings: { stability: 0.35, similarity_boost: 0.75, style: 0.4, speed: 1.0 },
+        // language_code hanya diterima model flash/turbo; multilingual v2 mengenali bahasanya sendiri
+        ...(MODEL.includes("flash") || MODEL.includes("turbo") ? { language_code: BAHASA } : {}),
+        // stabilitas lebih tinggi = intonasi rapi, tidak "melompat-lompat" antarklip
+        voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.25, use_speaker_boost: true, speed: 0.95 },
       }),
     }
   );
@@ -62,17 +65,45 @@ async function buat(kunci, teks, tujuan) {
   fs.writeFileSync(tujuan, Buffer.from(await res.arrayBuffer()));
 }
 
+// buang hening di awal & akhir klip
+const POTONG =
+  "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.05," +
+  "areverse,silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse";
+
 function olah(sumber, tujuan) {
   const filter =
     NADA === 1
-      ? "highpass=f=90,loudnorm=I=-16:TP=-1.5"
-      : `rubberband=pitch=${NADA}:formant=shifted:pitchq=quality,highpass=f=120,` +
+      ? `${POTONG},highpass=f=80,loudnorm=I=-16:TP=-1.5`
+      : `${POTONG},rubberband=pitch=${NADA}:formant=shifted:pitchq=quality,highpass=f=120,` +
         "equalizer=f=3500:t=q:w=1.2:g=2.5,loudnorm=I=-16:TP=-1.5";
   execFileSync(
     "ffmpeg",
-    ["-y", "-loglevel", "error", "-i", sumber, "-af", filter, "-ar", "44100", "-ac", "1", "-b:a", "64k", tujuan],
+    ["-y", "-loglevel", "error", "-i", sumber, "-af", filter, "-ar", "44100", "-ac", "1", "-b:a", "96k", tujuan],
     { stdio: "inherit" }
   );
+}
+
+/**
+ * --contoh: rekam satu kalimat dengan setiap suara perempuan premade di akun ini
+ * ke .suara-contoh/, supaya bisa dibandingkan dulu sebelum merekam semua klip.
+ */
+async function buatContoh(kunci) {
+  const folder = path.join(ROOT, ".suara-contoh");
+  fs.mkdirSync(folder, { recursive: true });
+  const res = await fetch("https://api.elevenlabs.io/v1/voices", { headers: { "xi-api-key": kunci } });
+  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  const { voices } = await res.json();
+  const pilihan = voices.filter((v) => v.category === "premade" && v.labels?.gender === "female");
+  const teks = "Meong! Halo, aku Mimi! Tiga kali empat, sama dengan dua belas. Hebat sekali!";
+  for (const v of pilihan) {
+    const nama = `${v.name.split(" ")[0].toLowerCase()}-${v.voice_id}`;
+    const mentah = path.join(folder, `${nama}.mentah.mp3`);
+    await buat(kunci, teks, mentah, v.voice_id);
+    olah(mentah, path.join(folder, `${nama}.mp3`));
+    fs.rmSync(mentah);
+    console.log(`  ${v.name} (${v.voice_id}) -> .suara-contoh/${nama}.mp3`);
+  }
+  console.log(`Dengarkan, lalu isi ELEVENLABS_VOICE_ID di .env.local dengan id suara yang paling cocok.`);
 }
 
 async function main() {
@@ -80,13 +111,18 @@ async function main() {
   const ulang = process.argv.includes("--ulang");
   fs.mkdirSync(TUJUAN, { recursive: true });
   fs.mkdirSync(MENTAH, { recursive: true });
-  const klip = daftarKlip();
+  // --hitung: ikut rekam 200 kalimat utuh fakta perkalian/pembagian (±8.600 huruf)
+  const klip = process.argv.includes("--hitung") ? [...daftarKlip(), ...klipHitung()] : daftarKlip();
 
   if (!hanyaOlah) {
     const kunci = bacaEnv("ELEVENLABS_API_KEY");
     if (!kunci) {
       console.error("ELEVENLABS_API_KEY belum diisi (pakai .env.local atau variabel lingkungan).");
       process.exit(1);
+    }
+    if (process.argv.includes("--contoh")) {
+      await buatContoh(kunci);
+      return;
     }
     const perlu = klip.filter((k) => ulang || !fs.existsSync(path.join(MENTAH, `${k.id}.mp3`)));
     const huruf = perlu.reduce((n, k) => n + k.teks.length, 0);
