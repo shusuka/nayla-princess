@@ -148,7 +148,7 @@ async function main() {
     olah(sumber, path.join(TUJUAN, `${k.id}.mp3`));
     n++;
   }
-  console.log(`${n} klip diolah jadi suara anak (nada x${NADA}) di public/suara.`);
+  console.log(`${n} klip diolah (nada x${NADA}) ke ${path.relative(ROOT, TUJUAN)}.`);
 }
 
 main();

@@ -89,7 +89,8 @@ Ada dua jenis suara, dipilih di **Pengaturan → Jenis suara** (tersimpan per pe
   npm run suara:edge -- --ulang  # buat ulang semua
   ```
 
-- **Lama**: klip ElevenLabs di `public/suara-lama/` (penjelasan di bawah).
+- **Lama**: klip ElevenLabs di `public/suara-lama/`, suara Jessica tanpa olah nada. Kalimat dasar direkam
+  dengan `eleven_multilingual_v2`, 200 kalimat soal utuh dengan `eleven_flash_v2_5` supaya muat kuota gratis.
 
   Rekam ulang ElevenLabs dengan jernih (model `eleven_multilingual_v2`, tanpa olah nada, 96 kbps):
 
