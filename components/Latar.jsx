@@ -140,7 +140,8 @@ function Matahari() {
   );
 }
 
-export default function Latar({ rumput = true }) {
+// `tenang`: untuk layar soal. Tanpa balon, burung, dan kupu-kupu, supaya anak fokus ke soal.
+export default function Latar({ rumput = true, tenang = false }) {
   const akar = useRef(null);
 
   // Parallax lembut mengikuti kursor/jari + ketukan pada balon & burung.
@@ -238,7 +239,7 @@ export default function Latar({ rumput = true }) {
         <Awan key={`awan-${i}`} {...a} />
       ))}
 
-      {BURUNG.map((b, i) => (
+      {!tenang && BURUNG.map((b, i) => (
         <div
           key={`burung-${i}`}
           className="absolute left-0"
@@ -252,7 +253,7 @@ export default function Latar({ rumput = true }) {
         </div>
       ))}
 
-      {BALON.map((b, i) => (
+      {!tenang && BALON.map((b, i) => (
         <Balon key={`balon-${i}`} {...b} />
       ))}
 

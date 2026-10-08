@@ -16,6 +16,17 @@ dan mini game — supaya belajar terasa seperti bermain, bukan mengerjakan PR.
 | **Hadiah** (`/hadiah`) | Butik Mimi: tukar 🐟 ikan dengan aksesori (termasuk **Koleksi Polkadot**), buka 6 kucing, koleksi stiker. Bisa "coba dulu" sebelum beli, dan setiap hadiah dibuka lewat animasi kado |
 | **Orang Tua** (`/ortu`) | Lama belajar, jumlah soal, benar/salah, ketepatan, grafik 7 hari, materi yang masih sulit |
 
+Alur belajar:
+
+- **Lanjut belajar** (tombol utama beranda) langsung membuka level terakhir yang belum selesai.
+- Latihan bisa **singkat (5 soal)** atau **biasa (10 soal)**.
+- Setiap soal dicatat sekali: benar pada percobaan pertama = 2 🐟, berhasil setelah mencoba lagi = 1 🐟
+  (dihitung "dengan bantuan", tidak dihitung salah dua kali). Hasil sesi: "Kamu menyelesaikan 10 soal; 7 tanpa bantuan."
+- Setelah **dua kali salah**, bantuan visual (kelompok ikan / mangkuk) muncul otomatis dan Mimi mengajak menghitung bersama.
+- Layar soal dibuat tenang: tanpa balon/burung, konfeti hanya di akhir sesi, Mimi melambai menyemangati (bukan sedih).
+- **Mini game mengikuti kemampuan**: soal diambil dari level yang sudah berbintang, ditambah sedikit (±20%) dari
+  level berikutnya. Pembagian baru ikut di mode "Campur" setelah ada level pembagian yang selesai.
+
 Prinsip yang dipakai:
 
 - Jawaban salah **tidak pernah** dihukum — Mimi hanya bilang "Yuk coba lagi ya",

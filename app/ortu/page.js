@@ -85,8 +85,8 @@ export default function HalamanOrtu() {
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <KotakAngka emoji="⏱️" label="Belajar hari ini" nilai={menitDari(stats.detikPerHari?.[h])} warna="#4f8ef7" />
           <KotakAngka emoji="📝" label="Total soal" nilai={stats.totalSoal} warna="#b79cff" />
-          <KotakAngka emoji="✅" label="Jawaban benar" nilai={stats.benar} warna="#7ee8b2" />
-          <KotakAngka emoji="❌" label="Jawaban salah" nilai={stats.salah} warna="#ff8a8a" />
+          <KotakAngka emoji="✅" label="Benar tanpa bantuan" nilai={stats.benar} warna="#7ee8b2" />
+          <KotakAngka emoji="💪" label="Berhasil setelah mencoba lagi" nilai={stats.salah} warna="#ffb27a" />
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">

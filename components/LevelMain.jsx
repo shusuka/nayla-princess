@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Latar from "@/components/Latar";
 import Kucing from "@/components/Kucing";
 import { BarAtas, Bintang, Gelembung, Ikon, KelompokBenda, Konfeti, Modal, SinarPutar, Tombol } from "@/components/UI";
@@ -17,8 +17,11 @@ const WARNA_JAWAB = [
   ["#ff9b54", "#d9702a"],
 ];
 
-const JUMLAH_SOAL = 10;
 const JUMLAH_TANTANGAN = 15;
+// Pujian yang menyebut usaha/strategi, dipakai saat anak berhasil setelah mencoba lagi.
+const PUJIAN_USAHA = "Kamu mencoba lagi sampai berhasil!";
+const PUJIAN_BANTUAN = "Kelompok ikannya membantu kamu menghitung.";
+const AJAK_HITUNG = "Yuk kita hitung bersama! Lihat ikannya.";
 
 function ambil(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -96,12 +99,17 @@ function TabelBelajar({ level, onPilih, barisAktif }) {
 
 export default function LevelMain({ id }) {
   const router = useRouter();
-  const { state, catatJawaban, selesaiLevel, nyalakanAudio } = useGame();
+  const { state, catatJawaban, selesaiLevel, nyalakanAudio, tandaiLevel } = useGame();
 
   const tantangan = id === "tantangan";
   const level = LEVEL_BY_ID[id];
 
+  useEffect(() => {
+    if (level) tandaiLevel(id);
+  }, [id, level, tandaiLevel]);
+
   const [fase, setFase] = useState(tantangan ? "siap" : "belajar");
+  const [jumlahSoal, setJumlahSoal] = useState(10);
   const [soalList, setSoalList] = useState([]);
   const [ke, setKe] = useState(0);
   const [benar, setBenar] = useState(0);
@@ -112,28 +120,36 @@ export default function LevelMain({ id }) {
   const [konfeti, setKonfeti] = useState(false);
   const [barisAktif, setBarisAktif] = useState(null);
   const [hasil, setHasil] = useState(null);
-  const sudahSalah = useRef(false);
+  const salahKe = useRef(0); // jumlah salah pada soal ini
+  const pakaiBantuan = useRef(false);
   const benarRef = useRef(0);
+  const ikanRef = useRef(0);
 
-  const totalSoal = tantangan ? JUMLAH_TANTANGAN : JUMLAH_SOAL;
+  const totalSoal = tantangan ? JUMLAH_TANTANGAN : jumlahSoal;
 
-  const mulaiLatihan = useCallback(() => {
-    nyalakanAudio();
-    const daftar = tantangan
-      ? soalCampur({ jumlah: JUMLAH_TANTANGAN, jumlahPilihan: 4 })
-      : soalLevel({ jenis: level.jenis, angka: level.angka, jumlah: JUMLAH_SOAL, jumlahPilihan: 3 });
-    setSoalList(daftar);
-    setKe(0);
-    setBenar(0);
-    benarRef.current = 0;
-    setHasil(null);
-    setStatus("tanya");
-    setSalahDipilih([]);
-    setBantuan(false);
-    sudahSalah.current = false;
-    setFase("latihan");
-    setPesan("Ayo kita coba!");
-  }, [level, tantangan, nyalakanAudio]);
+  const mulaiLatihan = useCallback(
+    (jumlah = jumlahSoal) => {
+      nyalakanAudio();
+      const daftar = tantangan
+        ? soalCampur({ jumlah: JUMLAH_TANTANGAN, jumlahPilihan: 4 })
+        : soalLevel({ jenis: level.jenis, angka: level.angka, jumlah, jumlahPilihan: 3 });
+      setJumlahSoal(jumlah);
+      setSoalList(daftar);
+      setKe(0);
+      setBenar(0);
+      benarRef.current = 0;
+      ikanRef.current = 0;
+      setHasil(null);
+      setStatus("tanya");
+      setSalahDipilih([]);
+      setBantuan(false);
+      salahKe.current = 0;
+      pakaiBantuan.current = false;
+      setFase("latihan");
+      setPesan("Ayo kita coba!");
+    },
+    [level, tantangan, nyalakanAudio, jumlahSoal]
+  );
 
   const soal = soalList[ke];
 
@@ -152,29 +168,35 @@ export default function LevelMain({ id }) {
     if (!soal || status === "betul") return;
     nyalakanAudio();
     if (nilai === soal.jawab) {
-      const pujian = ambil(PUJIAN);
+      // Benar langsung = 2 ikan; berhasil setelah mencoba lagi tetap dihargai 1 ikan.
+      const langsung = salahKe.current === 0;
+      const pujian = langsung ? ambil(PUJIAN) : pakaiBantuan.current ? PUJIAN_BANTUAN : PUJIAN_USAHA;
       setStatus("betul");
       setPesan(pujian);
       sfx("benar");
       bicara(pujian);
-      setKonfeti(true);
-      setTimeout(() => setKonfeti(false), 1600);
-      if (!sudahSalah.current) {
+      if (langsung) {
         benarRef.current += 1;
         setBenar(benarRef.current);
       }
-      catatJawaban({ kunci: soal.kunci, benar: !sudahSalah.current, hadiahIkan: sudahSalah.current ? 1 : 2 });
+      ikanRef.current += langsung ? 2 : 1;
+      catatJawaban({ kunci: soal.kunci, benar: langsung });
       setTimeout(lanjut, 1400);
     } else {
-      const kata = ambil(SEMANGAT);
+      salahKe.current += 1;
       setStatus("salah");
-      setPesan(kata);
-      sfx("salah");
-      bicara(kata);
       setSalahDipilih((s) => [...s, nilai]);
-      if (!sudahSalah.current) {
-        sudahSalah.current = true;
-        catatJawaban({ kunci: soal.kunci, benar: false });
+      sfx("salah");
+      if (salahKe.current >= 2 && !bantuan) {
+        // dua kali salah: Mimi langsung mengajak menghitung bersama lewat gambar
+        setBantuan(true);
+        pakaiBantuan.current = true;
+        setPesan(AJAK_HITUNG);
+        bicara(AJAK_HITUNG);
+      } else {
+        const kata = ambil(SEMANGAT);
+        setPesan(kata);
+        bicara(kata);
       }
       setTimeout(() => setStatus("tanya"), 900);
     }
@@ -183,7 +205,8 @@ export default function LevelMain({ id }) {
   const lanjut = () => {
     setSalahDipilih([]);
     setBantuan(false);
-    sudahSalah.current = false;
+    salahKe.current = 0;
+    pakaiBantuan.current = false;
     setStatus("tanya");
     setPesan("");
     const berikut = ke + 1;
@@ -195,7 +218,7 @@ export default function LevelMain({ id }) {
     const jumlahBenar = benarRef.current;
     const bintang = tantangan ? 0 : selesaiLevel(id, jumlahBenar, totalSoal);
     const bintangTampil = tantangan ? Math.round((jumlahBenar / totalSoal) * 5) : bintang;
-    setHasil({ bintang: bintangTampil, benar: jumlahBenar });
+    setHasil({ bintang: bintangTampil, benar: jumlahBenar, ikan: ikanRef.current + (tantangan ? 0 : bintang * 3) });
     setFase("selesai");
     sfx("levelSelesai");
     setKonfeti(true);
@@ -227,8 +250,8 @@ export default function LevelMain({ id }) {
 
   return (
     <main className="relative min-h-dvh pb-12">
-      <Latar rumput={false} />
-      <Konfeti aktif={konfeti} jumlah={fase === "selesai" ? 70 : 24} />
+      <Latar rumput={false} tenang={fase === "latihan"} />
+      <Konfeti aktif={konfeti} jumlah={70} />
       <BarAtas judul={judul} kembali="/belajar" />
 
       <div className="mx-auto max-w-2xl px-4">
@@ -243,7 +266,7 @@ export default function LevelMain({ id }) {
               Soal perkalian <b>dan</b> pembagian 1–10 diacak. Pilih dari 4 jawaban. Kamu pasti bisa! 💪
             </div>
             <Tombol
-              onClick={mulaiLatihan}
+              onClick={() => mulaiLatihan()}
               warna="#a07bf5"
               bayangan="#7a55d0"
               className="mt-6 w-full px-6 py-5 text-2xl"
@@ -276,14 +299,26 @@ export default function LevelMain({ id }) {
               )}
             </div>
 
-            <Tombol
-              onClick={mulaiLatihan}
-              warna="#3fbd84"
-              bayangan="#2b9264"
-              className="mt-6 w-full px-6 py-5 text-2xl"
-            >
-              ▶️ Yuk Latihan!
-            </Tombol>
+            <div className="mt-6 grid w-full grid-cols-2 gap-3">
+              <Tombol
+                onClick={() => mulaiLatihan(5)}
+                warna="#4f8ef7"
+                bayangan="#2f6ede"
+                className="flex flex-col items-center px-4 py-4 text-xl sm:text-2xl"
+              >
+                ⚡ Latihan singkat
+                <span className="text-sm font-semibold opacity-90">5 soal</span>
+              </Tombol>
+              <Tombol
+                onClick={() => mulaiLatihan(10)}
+                warna="#3fbd84"
+                bayangan="#2b9264"
+                className="flex flex-col items-center px-4 py-4 text-xl sm:text-2xl"
+              >
+                ▶️ Latihan biasa
+                <span className="text-sm font-semibold opacity-90">10 soal</span>
+              </Tombol>
+            </div>
           </div>
         )}
 
@@ -310,8 +345,8 @@ export default function LevelMain({ id }) {
               <Kucing
                 id={state.kucingAktif}
                 dipakai={state.dipakai}
-                ekspresi={status === "betul" ? "senang" : status === "salah" ? "sedih" : "diam"}
-                aksi={status === "betul" ? "lompat" : "none"}
+                ekspresi={status === "betul" ? "senang" : "diam"}
+                aksi={status === "betul" ? "lompat" : status === "salah" ? "lambai" : "none"}
                 ukuran={100}
               />
               {pesan && <Gelembung className="mb-4">{pesan}</Gelembung>}
@@ -355,6 +390,7 @@ export default function LevelMain({ id }) {
                 type="button"
                 onClick={() => {
                   setBantuan((b) => !b);
+                  pakaiBantuan.current = true;
                   sfx("pilih");
                 }}
                 className="mt-6 inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#fff1b8] to-[#ffd66b] px-5 py-2 font-display text-lg font-bold text-tinta shadow-[inset_0_2px_0_rgba(255,255,255,.7),0_6px_0_#e0a82e,0_12px_20px_-8px_rgba(184,116,26,.5)] transition-transform active:translate-y-1"
@@ -385,15 +421,19 @@ export default function LevelMain({ id }) {
               <Bintang jumlah={hasil.bintang} ukuran={42} animasi />
             </div>
             <p className="mt-3 text-xl font-semibold text-laut-tua">
-              Benar {hasil.benar} dari {totalSoal}
+              Kamu menyelesaikan {totalSoal} soal
+              {hasil.benar === totalSoal ? ", semuanya tanpa bantuan!" : `; ${hasil.benar} tanpa bantuan.`}
             </p>
+            {hasil.benar < totalSoal && (
+              <p className="mt-1 text-laut-tua/80">Sisanya berhasil setelah mencoba lagi. Itu juga hebat!</p>
+            )}
             <p className="mt-1 text-laut-tua/70">
-              Kamu dapat 🐟 {hasil.bintang * 3 + hasil.benar * 2} ikan
+              Kamu dapat 🐟 {hasil.ikan} ikan
               {!tantangan && hasil.bintang > 0 ? ` dan 💎 ${hasil.bintang >= 5 ? 3 : hasil.bintang >= 3 ? 2 : 1} permata` : ""}
             </p>
 
             <div className="mt-6 grid gap-3">
-              <Tombol onClick={mulaiLatihan} warna="#ffb067" bayangan="#cf7526" className="px-6 py-4 text-lg">
+              <Tombol onClick={() => mulaiLatihan()} warna="#ffb067" bayangan="#cf7526" className="px-6 py-4 text-lg">
                 🔄 Ulangi
               </Tombol>
               {levelBerikut && hasil.bintang > 0 && (

@@ -6,7 +6,7 @@ import Kucing from "@/components/Kucing";
 import { Ikan, Makanan, Tikus } from "@/components/Hewan";
 import { BarAtas, Bintang, Gelembung, Konfeti, Modal, SinarPutar, Tombol } from "@/components/UI";
 import { GAME_BY_ID, PUJIAN, PUZZLE_GAMBAR, SEMANGAT } from "@/lib/data";
-import { soalCampur } from "@/lib/quiz";
+import { soalSesuaiKemampuan, teksMateri } from "@/lib/quiz";
 import { bicara, sfx } from "@/lib/sound";
 import { useGame } from "@/lib/store";
 
@@ -89,8 +89,8 @@ function AreaMakan({ pilihan, onPilih, salahDipilih, jawab, status, kucingId, di
         <Kucing
           id={kucingId}
           dipakai={dipakai}
-          ekspresi={status === "betul" ? "senang" : status === "salah" ? "sedih" : "diam"}
-          aksi={status === "betul" ? "lompat" : "none"}
+          ekspresi={status === "betul" ? "senang" : "diam"}
+          aksi={status === "betul" ? "lompat" : status === "salah" ? "lambai" : "none"}
           ukuran={130}
         />
       </div>
@@ -294,7 +294,7 @@ export default function GameMain({ game }) {
     (jenis) => {
       nyalakanAudio();
       setSoalList(
-        soalCampur({ jenis, jumlah: jumlahSoal, jumlahPilihan: game === "puzzle" ? 4 : 3 })
+        soalSesuaiKemampuan({ levels: state.levels, jenis, jumlah: jumlahSoal, jumlahPilihan: game === "puzzle" ? 4 : 3 })
       );
       setKe(0);
       setBenar(0);
@@ -306,7 +306,7 @@ export default function GameMain({ game }) {
       setGambar(ambil(PUZZLE_GAMBAR));
       setFase("main");
     },
-    [game, jumlahSoal, nyalakanAudio]
+    [game, jumlahSoal, nyalakanAudio, state.levels]
   );
 
   const soal = soalList[ke];
@@ -340,13 +340,11 @@ export default function GameMain({ game }) {
       sfx(game === "balon" ? "pop" : game === "ikan" ? "koin" : "benar");
       setTimeout(() => sfx("bintang"), 140);
       bicara(pujian);
-      setKonfeti(true);
-      setTimeout(() => setKonfeti(false), 1200);
       if (!sudahSalah.current) {
         benarRef.current += 1;
         setBenar(benarRef.current);
       }
-      catatJawaban({ kunci: soal.kunci, benar: !sudahSalah.current, hadiahIkan: 2 });
+      catatJawaban({ kunci: soal.kunci, benar: !sudahSalah.current });
       const idx = ke;
       setTimeout(() => lanjut(idx), 1300);
     } else {
@@ -356,10 +354,7 @@ export default function GameMain({ game }) {
       sfx("salah");
       bicara(kata);
       setSalahDipilih((s) => [...s, nilai]);
-      if (!sudahSalah.current) {
-        sudahSalah.current = true;
-        catatJawaban({ kunci: soal.kunci, benar: false });
-      }
+      sudahSalah.current = true;
       setTimeout(() => setStatus("tanya"), 900);
     }
   };
@@ -389,7 +384,7 @@ export default function GameMain({ game }) {
   return (
     <main className="relative min-h-dvh pb-14">
       <Latar rumput={false} />
-      <Konfeti aktif={konfeti} jumlah={fase === "selesai" ? 70 : 20} />
+      <Konfeti aktif={konfeti} jumlah={70} />
       <BarAtas judul={`${info.emoji} ${info.nama}`} kembali="/main" />
 
       <div className="mx-auto max-w-xl px-4">
@@ -410,7 +405,16 @@ export default function GameMain({ game }) {
                   className="polkadot anim-muncul px-6 py-5 text-2xl"
                   style={{ "--dot": "rgba(255,255,255,.16)" }}
                 >
-                  {j.emoji} {j.label}
+                  <span className="flex flex-col items-center">
+                    <span>
+                      {j.emoji} {j.label}
+                    </span>
+                    <span className="text-sm font-semibold opacity-90">
+                      {j.id === "campur"
+                        ? "Dari materi yang sudah kamu pelajari"
+                        : teksMateri(state.levels, j.id)}
+                    </span>
+                  </span>
                 </Tombol>
               ))}
             </div>
@@ -477,7 +481,8 @@ export default function GameMain({ game }) {
               <Bintang jumlah={Math.round((benar / jumlahSoal) * 5)} ukuran={40} animasi />
             </div>
             <p className="mt-3 text-xl font-semibold text-laut-tua">
-              Benar {benar} dari {jumlahSoal}
+              Kamu menyelesaikan {jumlahSoal} soal
+              {benar === jumlahSoal ? ", semuanya tanpa bantuan!" : `; ${benar} tanpa bantuan.`}
             </p>
             {game === "puzzle" && benar >= 9 && (
               <p className="mt-1 text-lg">

@@ -46,7 +46,7 @@ const MENU = [
 function useUkuranMimi() {
   const [ukuran, setUkuran] = useState(200);
   useEffect(() => {
-    const hitung = () => setUkuran(Math.round(Math.min(230, Math.max(110, (window.innerHeight - 500) * 0.8))));
+    const hitung = () => setUkuran(Math.round(Math.min(230, Math.max(110, (window.innerHeight - 570) * 0.8))));
     hitung();
     window.addEventListener("resize", hitung);
     return () => window.removeEventListener("resize", hitung);
@@ -78,7 +78,7 @@ function Setelan({ nilai, onUbah, label, ikon }) {
 }
 
 export default function Beranda() {
-  const { state, siap, nyalakanAudio, setNama, ubahSetelan } = useGame();
+  const { state, siap, nyalakanAudio, setNama, ubahSetelan, levelLanjut } = useGame();
   const [sapaan, setSapaan] = useState(SAPAAN[0]);
   const [aksi, setAksi] = useState("lambai");
   const [isiNama, setIsiNama] = useState("");
@@ -209,7 +209,26 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* menu utama: tiga kartu sejajar, sama besar */}
+      {/* tombol utama: langsung ke materi berikutnya */}
+      <div className="anim-muncul mt-3 w-full max-w-2xl" style={{ animationDelay: ".18s" }}>
+        <Tombol
+          href={levelLanjut ? `/belajar/${levelLanjut.id}` : "/belajar/tantangan"}
+          warna="#ff9b54"
+          bayangan="#d9702a"
+          className="polkadot flex w-full items-center justify-center gap-3 px-5 py-3 text-xl sm:text-2xl"
+          style={{ "--dot": "rgba(255,255,255,.16)" }}
+        >
+          <span className="text-3xl" aria-hidden="true">▶️</span>
+          <span className="flex flex-col items-start leading-tight">
+            <span>Lanjut belajar</span>
+            <span className="text-sm font-semibold opacity-90">
+              {levelLanjut ? levelLanjut.nama : "🏆 Mode Tantangan"}
+            </span>
+          </span>
+        </Tombol>
+      </div>
+
+      {/* menu pendamping: tiga kartu sejajar, sama besar */}
       <nav className="mt-3 grid w-full max-w-2xl grid-cols-3 gap-3 sm:gap-4" aria-label="Menu utama">
         {MENU.map((m, i) => (
           <div key={m.href} className="anim-muncul" style={{ animationDelay: `${0.2 + i * 0.1}s` }}>
@@ -218,7 +237,7 @@ export default function Beranda() {
                 href={m.href}
                 warna={m.warna}
                 bayangan={m.bayangan}
-                className="polkadot flex h-full min-h-[clamp(6.5rem,15vh,9rem)] w-full flex-col items-center justify-center gap-0.5 px-2 py-3 text-xl sm:text-2xl"
+                className="polkadot flex h-full min-h-[clamp(5.5rem,12vh,8rem)] w-full flex-col items-center justify-center gap-0.5 px-2 py-3 text-xl sm:text-2xl"
                 style={{ "--dot": "rgba(255,255,255,.16)" }}
               >
                 {m.emas && <span className="foil" />}
