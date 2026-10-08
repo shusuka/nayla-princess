@@ -598,10 +598,13 @@ export function StikerPopup() {
    ================================================================ */
 export function KartuMiring({ children, className = "", kuat = 10, style, ...sisa }) {
   const ref = useRef(null);
+  const bingkai = useRef(null);
+  // Posisi kursor diukur dari bingkai luar yang diam, bukan dari kartu yang sedang miring/terangkat.
+  // Kalau diukur dari kartunya, tepi kartu bergeser menjauhi kursor -> hover lepas -> kembali -> bergetar.
   const gerak = (e) => {
     const el = ref.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
+    if (!el || !bingkai.current) return;
+    const r = bingkai.current.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width;
     const y = (e.clientY - r.top) / r.height;
     el.style.setProperty("--ry", `${(x - 0.5) * kuat}deg`);
@@ -616,11 +619,9 @@ export function KartuMiring({ children, className = "", kuat = 10, style, ...sis
     el.style.setProperty("--rx", "0deg");
   };
   return (
-    <div style={{ perspective: 800 }} className="h-full">
+    <div ref={bingkai} style={{ perspective: 800 }} className="kartu-miring h-full" onPointerMove={gerak} onPointerLeave={lepas}>
       <div
         ref={ref}
-        onPointerMove={gerak}
-        onPointerLeave={lepas}
         className={`relative h-full ${className}`}
         style={{
           transform: "rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg))",

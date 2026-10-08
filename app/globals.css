@@ -310,6 +310,15 @@ button {
     0 6px 12px -4px rgb(var(--bayangan-tinta) / 0.3);
   transition-duration: 0.08s;
 }
+/* Di dalam KartuMiring, efek angkat mengikuti hover bingkai luar yang diam,
+   supaya tombol tidak naik-turun terus saat kursor di tepinya. */
+.kartu-miring:hover .tombol-3d {
+  transform: translateY(-3px) scale(1.03);
+  filter: brightness(1.05) saturate(1.05);
+}
+.kartu-miring .tombol-3d:active {
+  transform: translateY(6px) scale(0.97);
+}
 .tombol-3d:disabled {
   filter: grayscale(0.7) brightness(0.98);
   cursor: not-allowed;
